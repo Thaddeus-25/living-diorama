@@ -70,6 +70,43 @@ namespace LivingDiorama.Tests
             Debug.Log($"[HudScreenshot] Saved {Path.Combine(folder, "hud.png")}");
         }
 
+        /// <summary>Preview mode with the human on the bench and the cat napping, saved to Verification/interactions.png.</summary>
+        [UnityTest]
+        public IEnumerator CaptureSittingAndNapping()
+        {
+            yield return SceneManager.LoadSceneAsync("Garden", LoadSceneMode.Single);
+            yield return null;
+            Object.FindAnyObjectByType<LivingDiorama.Core.AppModeController>().SetMode(LivingDiorama.Core.AppMode.Preview);
+            yield return null;
+
+            var creatures = Object.FindObjectsByType<LivingDiorama.Entities.LivingEntity>(FindObjectsSortMode.None);
+            var human = creatures.First(c => c.Definition.Id == "human");
+            var cat = creatures.First(c => c.Definition.Id == "cat");
+            human.StartBehaviour(LivingDiorama.Data.BehaviourWeight.Interact(LivingDiorama.Data.InteractionType.Sit, 1f, new Vector2(60f, 60f)));
+            cat.StartBehaviour(LivingDiorama.Data.BehaviourWeight.Interact(LivingDiorama.Data.InteractionType.Sleep, 1f, new Vector2(60f, 60f)));
+
+            Time.timeScale = 3f;
+            for (float t = 0f; t < 20f; t += Time.deltaTime)
+            {
+                if ((human.CurrentState as LivingDiorama.Entities.InteractState)?.IsHolding == true
+                    && (cat.CurrentState as LivingDiorama.Entities.InteractState)?.IsHolding == true) break;
+                yield return null;
+            }
+            Time.timeScale = 1f;
+
+            var cam = Camera.main;
+            var target = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            cam.targetTexture = target;
+            cam.Render();
+            cam.targetTexture = null;
+            var image = Read(target);
+
+            string folder = Path.Combine(Directory.GetCurrentDirectory(), "Verification");
+            Directory.CreateDirectory(folder);
+            File.WriteAllBytes(Path.Combine(folder, "interactions.png"), image.EncodeToPNG());
+            Debug.Log($"[HudScreenshot] human={human.CurrentState?.Name} cat={cat.CurrentState?.Name}");
+        }
+
         private static Texture2D Read(RenderTexture source)
         {
             var previous = RenderTexture.active;

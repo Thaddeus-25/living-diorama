@@ -32,6 +32,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3690496552947826755}
+  - {fileID: 5401216823157239301}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6223990539919659152
@@ -206,3 +207,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e4d0c14928017e499d8e531812f6757, type: 3}
   m_Name: 
   m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.World.Billboard
+--- !u!1 &6294507315220073400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5401216823157239301}
+  - component: {fileID: 8095131892749020584}
+  m_Layer: 0
+  m_Name: NapSpot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5401216823157239301
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6294507315220073400}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.1, y: 0, z: -0.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4389079789539468680}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8095131892749020584
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6294507315220073400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31c0dfa9eab3ea14db6ef317b05b7410, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.Interactions.InteractionPoint
+  type: 1
+  supportedEntityIds:
+  - cat
+  capacity: 1
+  approachOffset: {x: 0, y: 0, z: 0}
+  animation: sleep
+  faceLeft: 0

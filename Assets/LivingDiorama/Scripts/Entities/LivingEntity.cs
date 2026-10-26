@@ -107,8 +107,14 @@ namespace LivingDiorama.Entities
             brain.Tick(this, Time.deltaTime);
             if (brain.Current == null || brain.Current.IsFinished)
             {
-                var next = BehaviourPicker.Pick(Definition != null ? Definition.Behaviours : null, Random);
-                brain.ChangeState(BehaviourPicker.CreateState(next, Random), this);
+                // A chained follow-up (e.g. sit after reaching the bench) wins over a fresh pick.
+                var next = (brain.Current as EntityState)?.Next;
+                if (next == null)
+                {
+                    var entry = BehaviourPicker.Pick(Definition != null ? Definition.Behaviours : null, Random);
+                    next = BehaviourPicker.CreateState(entry, Random);
+                }
+                brain.ChangeState(next, this);
             }
 
             UpdateAvoidancePriority();

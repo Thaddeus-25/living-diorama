@@ -12,6 +12,12 @@ namespace LivingDiorama.Entities
         public abstract string Name { get; }
         public bool IsFinished { get; protected set; }
 
+        /// <summary>
+        /// Optional follow-up state. When set as this state finishes, the creature continues with it
+        /// instead of picking from its behaviour table (e.g. walk to the bench, then sit).
+        /// </summary>
+        public EntityState Next { get; protected set; }
+
         public virtual void Enter(LivingEntity entity)
         {
             Elapsed = 0f;

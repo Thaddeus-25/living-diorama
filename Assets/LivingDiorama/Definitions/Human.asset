@@ -30,11 +30,19 @@ MonoBehaviour:
     weight: 3
     durationRange: {x: 2, y: 5}
     animation: 
+    interaction: 0
   - behaviour: 1
     weight: 5
     durationRange: {x: 8, y: 15}
     animation: 
+    interaction: 0
   - behaviour: 2
     weight: 2
     durationRange: {x: 3, y: 5}
     animation: 
+    interaction: 0
+  - behaviour: 4
+    weight: 3
+    durationRange: {x: 6, y: 12}
+    animation: 
+    interaction: 0

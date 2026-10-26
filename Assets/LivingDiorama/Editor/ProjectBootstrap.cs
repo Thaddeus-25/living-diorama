@@ -36,6 +36,37 @@ namespace LivingDiorama.EditorTools
         };
 
         /// <summary>
+        /// Interaction points per prop id. Positions are local to the prop (x = along it, z = towards
+        /// the back). Points sit just in front of the sprite (negative z) so the creature draws in front.
+        /// The approach spot must be outside the prop's carved no-walk area.
+        /// </summary>
+        private static readonly Dictionary<string, InteractionPointSpec[]> PropInteractions = new()
+        {
+            ["bench"] = new[]
+            {
+                new InteractionPointSpec
+                {
+                    Name = "SeatLeft", Type = InteractionType.Sit, EntityIds = new[] { "human" }, Animation = "sit",
+                    LocalPosition = new Vector3(-0.45f, 0f, -0.08f), ApproachOffset = new Vector3(0f, 0f, -0.7f)
+                },
+                new InteractionPointSpec
+                {
+                    Name = "SeatRight", Type = InteractionType.Sit, EntityIds = new[] { "human" }, Animation = "sit",
+                    LocalPosition = new Vector3(0.45f, 0f, -0.08f), ApproachOffset = new Vector3(0f, 0f, -0.7f),
+                    FaceLeft = true
+                },
+            },
+            ["tree"] = new[]
+            {
+                new InteractionPointSpec
+                {
+                    Name = "NapSpot", Type = InteractionType.Sleep, EntityIds = new[] { "cat" }, Animation = "sleep",
+                    LocalPosition = new Vector3(0.1f, 0f, -0.8f)
+                },
+            },
+        };
+
+        /// <summary>
         /// Living creatures. The behaviour tables are only used when a definition is first created;
         /// after that, tune them on the definition asset in the Inspector.
         /// </summary>
@@ -47,6 +78,7 @@ namespace LivingDiorama.EditorTools
                     new BehaviourWeight(EntityBehaviour.Idle, 3f, new Vector2(2f, 5f)),
                     new BehaviourWeight(EntityBehaviour.Wander, 5f, new Vector2(8f, 15f)),
                     new BehaviourWeight(EntityBehaviour.LookAround, 2f, new Vector2(3f, 5f)),
+                    BehaviourWeight.Interact(InteractionType.Sit, 3f, new Vector2(6f, 12f)),
                 }),
             new("cat", "Cat", CreatureArt.CatClips, new Vector2(0.9f, 0.5f),
                 moveSpeed: 1.5f, wanderRadius: 4f, agentRadius: 0.2f, new[]
@@ -57,6 +89,7 @@ namespace LivingDiorama.EditorTools
                     new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(10f, 20f), "sleep"),
                     new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(1.5f, 2.5f), "stretch"),
                     new BehaviourWeight(EntityBehaviour.LookAround, 1f, new Vector2(2f, 4f)),
+                    BehaviourWeight.Interact(InteractionType.Sleep, 1.5f, new Vector2(10f, 20f)),
                 }),
         };
 
@@ -73,7 +106,9 @@ namespace LivingDiorama.EditorTools
             {
                 var sprite = LoadSprite(art[spec.ArtName]);
                 var definition = LoadOrCreateDefinition(spec, sprite);
-                var prefab = PrefabBuilder.BuildProp(definition, sprite, materials.SpriteLit, $"{PrefabsFolder}/{spec.DisplayName}.prefab");
+                PropInteractions.TryGetValue(spec.Id, out var interactionPoints);
+                var prefab = PrefabBuilder.BuildProp(definition, sprite, materials.SpriteLit,
+                    $"{PrefabsFolder}/{spec.DisplayName}.prefab", interactionPoints);
                 definition.SetPrefab(prefab);
                 EditorUtility.SetDirty(definition);
                 definitions.Add(definition);
@@ -153,6 +188,10 @@ namespace LivingDiorama.EditorTools
             if (definition != null)
             {
                 definition.SetAnimations(animations);
+                // Roll out new default behaviours (e.g. Interact) without touching tuned entries.
+                foreach (var entry in spec.Behaviours)
+                    if (definition.AddBehaviourIfMissing(entry))
+                        Debug.Log($"[Bootstrap] Added {entry.behaviour} {entry.interaction} to {definition.name}");
                 return definition;
             }
 

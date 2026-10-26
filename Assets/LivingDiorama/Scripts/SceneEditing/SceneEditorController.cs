@@ -2,6 +2,7 @@ using System;
 using LivingDiorama.Core;
 using LivingDiorama.Data;
 using LivingDiorama.Entities;
+using LivingDiorama.Interactions;
 using LivingDiorama.Persistence;
 using LivingDiorama.SceneEditing.Commands;
 using LivingDiorama.World;
@@ -382,6 +383,8 @@ namespace LivingDiorama.SceneEditing
             foreach (var agent in preview.GetComponentsInChildren<NavMeshAgent>(true)) DestroyImmediate(agent);
             foreach (var behaviour in preview.GetComponentsInChildren<PlacedObject>(true)) DestroyImmediate(behaviour);
             foreach (var obstacle in preview.GetComponentsInChildren<NavMeshObstacle>(true)) DestroyImmediate(obstacle);
+            // Otherwise creatures could try to sit on the preview.
+            foreach (var point in preview.GetComponentsInChildren<InteractionPoint>(true)) DestroyImmediate(point);
             foreach (var collider in preview.GetComponentsInChildren<Collider>(true)) DestroyImmediate(collider);
 
             preview.transform.localScale = Vector3.one * definition.DefaultScale;

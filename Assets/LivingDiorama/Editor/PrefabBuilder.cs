@@ -1,4 +1,5 @@
 using LivingDiorama.Data;
+using LivingDiorama.Interactions;
 using LivingDiorama.World;
 using UnityEditor;
 using UnityEngine;
@@ -16,10 +17,20 @@ namespace LivingDiorama.EditorTools
     /// </summary>
     internal static class PrefabBuilder
     {
-        public static GameObject BuildProp(ObjectDefinition definition, Sprite sprite, Material material, string path)
+        public static GameObject BuildProp(ObjectDefinition definition, Sprite sprite, Material material, string path,
+            InteractionPointSpec[] interactionPoints = null)
         {
             var root = new GameObject(definition.DisplayName);
             var visual = CreateSpriteVisual(root.transform, sprite, material, castShadows: true);
+
+            foreach (var spec in interactionPoints ?? System.Array.Empty<InteractionPointSpec>())
+            {
+                var pointObject = new GameObject(spec.Name);
+                pointObject.transform.SetParent(root.transform, false);
+                pointObject.transform.localPosition = spec.LocalPosition;
+                pointObject.AddComponent<InteractionPoint>().Configure(spec.Type, spec.EntityIds, spec.Capacity,
+                    spec.ApproachOffset, spec.Animation, spec.FaceLeft);
+            }
 
             var placed = root.AddComponent<PlacedObject>();
             placed.Configure(definition, visual);
@@ -89,5 +100,18 @@ namespace LivingDiorama.EditorTools
             visualObject.AddComponent<Billboard>();
             return visual;
         }
+    }
+
+    /// <summary>One interaction point to add to a prop prefab (see <see cref="InteractionPoint"/>).</summary>
+    internal sealed class InteractionPointSpec
+    {
+        public string Name;
+        public InteractionType Type;
+        public Vector3 LocalPosition;
+        public Vector3 ApproachOffset;
+        public string[] EntityIds;
+        public int Capacity = 1;
+        public string Animation;
+        public bool FaceLeft;
     }
 }

@@ -39,6 +39,24 @@ Each creature's behaviour comes from its definition asset (`Definitions/Human.as
 Walkable ground is a NavMesh baked from the grass. Trees, rocks and benches carve holes in it
 at runtime, so creatures walk around them wherever you move them.
 
+### Interactions
+Objects can carry **InteractionPoint** components on child transforms. Each point sets:
+- a type (`Sit`, `Sleep`)
+- which creatures may use it
+- a capacity
+- an approach offset (where to walk to first)
+- an animation
+- a facing
+
+A creature with an **Interact** entry in its behaviour table walks to the nearest free, reachable
+point of that type, reserves it, uses it, then releases it.
+
+- The bench has two seats (humans sit for 6–12 s); each tree has a nap spot for the cat.
+- Seats are reserved, so two humans never share one.
+- If the object disappears, or you switch to Edit mode, creatures give up or step off cleanly.
+- To add an interaction to another prop, add a row to `ProjectBootstrap.PropInteractions`, or add
+  the component to the prefab by hand.
+
 To add a new creature: add its frames as `Name_clip_frame.png`, an animation set, an
 `EntityDefinition`, and list it in the `ObjectDatabase`. The bootstrap shows the pattern in
 `ProjectBootstrap.Entities`.

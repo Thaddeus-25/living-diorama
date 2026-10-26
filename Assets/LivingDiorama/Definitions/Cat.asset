@@ -30,23 +30,34 @@ MonoBehaviour:
     weight: 2
     durationRange: {x: 2, y: 4}
     animation: 
+    interaction: 0
   - behaviour: 1
     weight: 4
     durationRange: {x: 6, y: 12}
     animation: 
+    interaction: 0
   - behaviour: 3
     weight: 2
     durationRange: {x: 4, y: 8}
     animation: sit
+    interaction: 0
   - behaviour: 3
     weight: 1
     durationRange: {x: 10, y: 20}
     animation: sleep
+    interaction: 0
   - behaviour: 3
     weight: 1
     durationRange: {x: 1.5, y: 2.5}
     animation: stretch
+    interaction: 0
   - behaviour: 2
     weight: 1
     durationRange: {x: 2, y: 4}
     animation: 
+    interaction: 0
+  - behaviour: 4
+    weight: 1.5
+    durationRange: {x: 10, y: 20}
+    animation: 
+    interaction: 1

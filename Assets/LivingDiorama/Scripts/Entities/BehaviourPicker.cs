@@ -45,6 +45,7 @@ namespace LivingDiorama.Entities
                 EntityBehaviour.Wander => new WanderState(duration),
                 EntityBehaviour.LookAround => new LookAroundState(duration),
                 EntityBehaviour.Rest => new StayState($"Rest ({entry.animation})", duration, entry.animation),
+                EntityBehaviour.Interact => new SeekInteractionState(entry.interaction, duration),
                 _ => throw new ArgumentOutOfRangeException(nameof(entry), entry.behaviour, "Unknown behaviour")
             };
         }

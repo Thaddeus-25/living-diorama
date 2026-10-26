@@ -14,7 +14,9 @@ namespace LivingDiorama.Data
         /// <summary>Stand and turn to look one way, then the other.</summary>
         LookAround,
         /// <summary>Stay put playing a named animation (sit, sleep, stretch...).</summary>
-        Rest
+        Rest,
+        /// <summary>Walk to a free interaction point of a given type (e.g. a bench seat) and use it.</summary>
+        Interact
     }
 
     /// <summary>One entry in a creature's "what do I do next?" table.</summary>
@@ -28,6 +30,8 @@ namespace LivingDiorama.Data
         public Vector2 durationRange = new(2f, 5f);
         [Tooltip("Animation to play (Rest uses it; others default to idle/walk when empty).")]
         public string animation;
+        [Tooltip("For Interact: which kind of interaction point to look for. The duration is how long it stays there.")]
+        public InteractionType interaction;
 
         public BehaviourWeight() { }
 
@@ -38,6 +42,16 @@ namespace LivingDiorama.Data
             this.durationRange = durationRange;
             this.animation = animation;
         }
+
+        public static BehaviourWeight Interact(InteractionType interaction, float weight, Vector2 durationRange) =>
+            new(EntityBehaviour.Interact, weight, durationRange) { interaction = interaction };
+
+        /// <summary>True when both entries describe the same choice (ignoring weight and duration).</summary>
+        public bool SameChoiceAs(BehaviourWeight other) =>
+            other != null && behaviour == other.behaviour
+            // Unity saves null strings as "", so treat them as equal.
+            && (animation ?? "") == (other.animation ?? "")
+            && (behaviour != EntityBehaviour.Interact || interaction == other.interaction);
     }
 
     /// <summary>
@@ -63,6 +77,19 @@ namespace LivingDiorama.Data
         public IReadOnlyList<BehaviourWeight> Behaviours => behaviours;
 
         public void SetAnimations(SpriteAnimationSet animationSet) => animations = animationSet;
+
+        /// <summary>
+        /// Adds a default behaviour to an existing definition unless an equivalent entry is already
+        /// there. Used to roll out new defaults without overwriting tuned tables (to turn one off,
+        /// set its weight to 0 rather than deleting it).
+        /// </summary>
+        public bool AddBehaviourIfMissing(BehaviourWeight entry)
+        {
+            foreach (var existing in behaviours)
+                if (existing != null && existing.SameChoiceAs(entry)) return false;
+            behaviours.Add(entry);
+            return true;
+        }
 
         public void ConfigureEntity(float speed, float wander, float radius, SpriteAnimationSet animationSet,
             IEnumerable<BehaviourWeight> behaviourTable)

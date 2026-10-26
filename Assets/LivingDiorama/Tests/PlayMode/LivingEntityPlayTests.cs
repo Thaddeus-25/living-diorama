@@ -96,9 +96,11 @@ namespace LivingDiorama.Tests
                     var p = creature.transform.position;
                     Assert.LessOrEqual(Mathf.Abs(p.x), halfWidth, $"{creature.name} left the garden: {p}");
                     Assert.LessOrEqual(Mathf.Abs(p.z), halfDepth, $"{creature.name} left the garden: {p}");
-                    foreach (var obstacle in obstacles)
-                        Assert.IsFalse(IsInsideFootprint(obstacle, p, creature.Agent.radius * 0.5f),
-                            $"{creature.name} walked into {obstacle.name} at {p}");
+                    // Using an interaction point (sitting on the bench) puts a creature on the object on purpose.
+                    if (creature.CurrentState is not InteractState)
+                        foreach (var obstacle in obstacles)
+                            Assert.IsFalse(IsInsideFootprint(obstacle, p, creature.Agent.radius * 0.5f),
+                                $"{creature.name} walked into {obstacle.name} at {p}");
                     if (creature.CurrentState != null) statesSeen.Add($"{creature.Definition.Id}:{creature.CurrentState.Name}");
                 }
                 yield return null;
