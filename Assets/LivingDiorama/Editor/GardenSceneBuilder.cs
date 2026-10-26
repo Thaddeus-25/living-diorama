@@ -4,9 +4,11 @@ using LivingDiorama.Data;
 using LivingDiorama.SceneEditing;
 using LivingDiorama.UI;
 using LivingDiorama.World;
+using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.Rendering;
@@ -38,6 +40,8 @@ namespace LivingDiorama.EditorTools
             ("rock", new Vector3(3f, 0f, -1.5f)),
             ("rock", new Vector3(-5.5f, 0f, -2.8f)),
             ("bench", new Vector3(0.5f, 0f, 1.5f)),
+            ("human", new Vector3(-1.5f, 0f, -0.8f)),
+            ("cat", new Vector3(2.2f, 0f, 0.6f)),
         };
 
         public static void Build(Dictionary<string, string> art)
@@ -49,7 +53,8 @@ namespace LivingDiorama.EditorTools
             var cameraComponent = CreateCamera(materials);
             CreateSun();
             ConfigureAmbientLight();
-            CreateGround(materials);
+            var environment = CreateGround(materials);
+            BakeNavMesh(environment);
             CreateBackdrop(art, materials, cameraComponent.GetComponent<DioramaCamera>());
             var world = CreateWorld(database);
             CreateEditor(world, cameraComponent, art, materials);
@@ -115,7 +120,24 @@ namespace LivingDiorama.EditorTools
             RenderSettings.ambientGroundColor = PixelCanvas.Hex("#6b5a48");
         }
 
-        private static void CreateGround(GeneratedMaterials materials)
+        /// <summary>
+        /// Bakes walkable ground from the Environment only (the grass), saved next to the scene.
+        /// Props are left out on purpose: they carve holes at runtime through NavMeshObstacle, so
+        /// moving them never needs a rebake.
+        /// </summary>
+        private static void BakeNavMesh(GameObject environment)
+        {
+            var surface = environment.AddComponent<NavMeshSurface>();
+            surface.collectObjects = CollectObjects.Children;
+            surface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
+            surface.BuildNavMesh();
+
+            string path = ProjectBootstrap.ScenesFolder + "/Garden_NavMesh.asset";
+            AssetDatabase.DeleteAsset(path);
+            AssetDatabase.CreateAsset(surface.navMeshData, path);
+        }
+
+        private static GameObject CreateGround(GeneratedMaterials materials)
         {
             var environment = new GameObject("Environment");
 
@@ -137,6 +159,7 @@ namespace LivingDiorama.EditorTools
             dirt.transform.position = new Vector3(0f, -BaseDepth * 0.5f - 0.01f, 0f);
             dirt.transform.localScale = new Vector3(GardenSize.x, BaseDepth, GardenSize.y);
             dirt.GetComponent<MeshRenderer>().sharedMaterial = materials.Dirt;
+            return environment;
         }
 
         private static void CreateBackdrop(Dictionary<string, string> art, GeneratedMaterials materials, DioramaCamera dioramaCamera)

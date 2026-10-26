@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Random = System.Random;
@@ -28,7 +29,7 @@ namespace LivingDiorama.EditorTools
             Gradient
         }
 
-        private readonly struct ArtSpec
+        internal readonly struct ArtSpec
         {
             public readonly string Name;
             public readonly ArtKind Kind;
@@ -42,7 +43,7 @@ namespace LivingDiorama.EditorTools
             }
         }
 
-        private static readonly ArtSpec[] Specs =
+        private static readonly ArtSpec[] PropSpecs =
         {
             new("Tree", ArtKind.Sprite, PaintTree),
             new("Rock", ArtKind.Sprite, PaintRock),
@@ -59,7 +60,7 @@ namespace LivingDiorama.EditorTools
         public static Dictionary<string, string> GenerateAll(string folder)
         {
             var paths = new Dictionary<string, string>();
-            foreach (var spec in Specs)
+            foreach (var spec in PropSpecs.Concat(CreatureArt.Specs()))
             {
                 string assetPath = $"{folder}/{spec.Name}.png";
                 paths[spec.Name] = assetPath;

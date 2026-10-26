@@ -24,6 +24,7 @@ namespace LivingDiorama.EditorTools
         public const string DefinitionsFolder = Root + "/Definitions";
         public const string PrefabsFolder = Root + "/Prefabs";
         public const string ScenesFolder = Root + "/Scenes";
+        public const string AnimationsFolder = DefinitionsFolder + "/Animations";
         public const string DatabasePath = DefinitionsFolder + "/ObjectDatabase.asset";
 
         /// <summary>Static props in the MVP. Add a row here (plus art) to add a new prop.</summary>
@@ -32,6 +33,31 @@ namespace LivingDiorama.EditorTools
             new("tree", "Tree", ObjectCategory.Nature, "Tree", true, new Vector2(1.0f, 0.8f)),
             new("rock", "Rock", ObjectCategory.Nature, "Rock", true, new Vector2(1.4f, 0.9f)),
             new("bench", "Bench", ObjectCategory.Structures, "Bench", true, new Vector2(1.9f, 0.6f)),
+        };
+
+        /// <summary>
+        /// Living creatures. The behaviour tables are only used when a definition is first created;
+        /// after that, tune them on the definition asset in the Inspector.
+        /// </summary>
+        private static readonly EntitySpec[] Entities =
+        {
+            new("human", "Human", CreatureArt.HumanClips, new Vector2(0.8f, 0.5f),
+                moveSpeed: 1.1f, wanderRadius: 6f, agentRadius: 0.25f, new[]
+                {
+                    new BehaviourWeight(EntityBehaviour.Idle, 3f, new Vector2(2f, 5f)),
+                    new BehaviourWeight(EntityBehaviour.Wander, 5f, new Vector2(8f, 15f)),
+                    new BehaviourWeight(EntityBehaviour.LookAround, 2f, new Vector2(3f, 5f)),
+                }),
+            new("cat", "Cat", CreatureArt.CatClips, new Vector2(0.9f, 0.5f),
+                moveSpeed: 1.5f, wanderRadius: 4f, agentRadius: 0.2f, new[]
+                {
+                    new BehaviourWeight(EntityBehaviour.Idle, 2f, new Vector2(2f, 4f)),
+                    new BehaviourWeight(EntityBehaviour.Wander, 4f, new Vector2(6f, 12f)),
+                    new BehaviourWeight(EntityBehaviour.Rest, 2f, new Vector2(4f, 8f), "sit"),
+                    new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(10f, 20f), "sleep"),
+                    new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(1.5f, 2.5f), "stretch"),
+                    new BehaviourWeight(EntityBehaviour.LookAround, 1f, new Vector2(2f, 4f)),
+                }),
         };
 
         [MenuItem("Living Diorama/Rebuild Generated Assets")]
@@ -48,6 +74,17 @@ namespace LivingDiorama.EditorTools
                 var sprite = LoadSprite(art[spec.ArtName]);
                 var definition = LoadOrCreateDefinition(spec, sprite);
                 var prefab = PrefabBuilder.BuildProp(definition, sprite, materials.SpriteLit, $"{PrefabsFolder}/{spec.DisplayName}.prefab");
+                definition.SetPrefab(prefab);
+                EditorUtility.SetDirty(definition);
+                definitions.Add(definition);
+            }
+
+            foreach (var spec in Entities)
+            {
+                var animations = BuildAnimationSet(spec, art);
+                var definition = LoadOrCreateEntityDefinition(spec, animations);
+                var firstFrame = animations.Find(SpriteAnimationSet.Idle).frames[0];
+                var prefab = PrefabBuilder.BuildEntity(definition, firstFrame, materials.SpriteLit, $"{PrefabsFolder}/{spec.DisplayName}.prefab");
                 definition.SetPrefab(prefab);
                 EditorUtility.SetDirty(definition);
                 definitions.Add(definition);
@@ -93,6 +130,41 @@ namespace LivingDiorama.EditorTools
             return definition;
         }
 
+        private static SpriteAnimationSet BuildAnimationSet(EntitySpec spec, Dictionary<string, string> art)
+        {
+            var animationSet = LoadOrCreate<SpriteAnimationSet>($"{AnimationsFolder}/{spec.DisplayName}Animations.asset");
+            var clips = new List<SpriteAnimationSet.Clip>();
+            foreach (var clipSpec in spec.Clips)
+            {
+                var frames = new Sprite[clipSpec.Frames];
+                for (int i = 0; i < frames.Length; i++)
+                    frames[i] = LoadSprite(art[CreatureArt.FrameName(spec.DisplayName, clipSpec.Name, i)]);
+                clips.Add(new SpriteAnimationSet.Clip { name = clipSpec.Name, frames = frames, framesPerSecond = clipSpec.FramesPerSecond });
+            }
+            animationSet.SetClips(clips);
+            EditorUtility.SetDirty(animationSet);
+            return animationSet;
+        }
+
+        private static EntityDefinition LoadOrCreateEntityDefinition(EntitySpec spec, SpriteAnimationSet animations)
+        {
+            string path = $"{DefinitionsFolder}/{spec.DisplayName}.asset";
+            var definition = AssetDatabase.LoadAssetAtPath<EntityDefinition>(path);
+            if (definition != null)
+            {
+                definition.SetAnimations(animations);
+                return definition;
+            }
+
+            definition = ScriptableObject.CreateInstance<EntityDefinition>();
+            var icon = animations.Find(SpriteAnimationSet.Idle).frames[0];
+            definition.Configure(spec.Id, spec.DisplayName, ObjectCategory.LivingThings, icon,
+                obstacle: false, spec.Footprint, rotation: false);
+            definition.ConfigureEntity(spec.MoveSpeed, spec.WanderRadius, spec.AgentRadius, animations, spec.Behaviours);
+            AssetDatabase.CreateAsset(definition, path);
+            return definition;
+        }
+
         private static T LoadOrCreate<T>(string path) where T : ScriptableObject
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(path);
@@ -119,7 +191,7 @@ namespace LivingDiorama.EditorTools
 
         private static void EnsureFolders()
         {
-            foreach (var folder in new[] { ArtFolder, MaterialsFolder, DefinitionsFolder, PrefabsFolder, ScenesFolder })
+            foreach (var folder in new[] { ArtFolder, MaterialsFolder, DefinitionsFolder, AnimationsFolder, PrefabsFolder, ScenesFolder })
             {
                 if (AssetDatabase.IsValidFolder(folder)) continue;
                 string parent = Path.GetDirectoryName(folder)!.Replace('\\', '/');
@@ -148,6 +220,31 @@ namespace LivingDiorama.EditorTools
                 IsObstacle = isObstacle;
                 Footprint = footprint;
             }
+        }
+    }
+
+    internal sealed class EntitySpec
+    {
+        public readonly string Id;
+        public readonly string DisplayName;
+        public readonly CreatureArt.ClipSpec[] Clips;
+        public readonly Vector2 Footprint;
+        public readonly float MoveSpeed;
+        public readonly float WanderRadius;
+        public readonly float AgentRadius;
+        public readonly BehaviourWeight[] Behaviours;
+
+        public EntitySpec(string id, string displayName, CreatureArt.ClipSpec[] clips, Vector2 footprint,
+            float moveSpeed, float wanderRadius, float agentRadius, BehaviourWeight[] behaviours)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Clips = clips;
+            Footprint = footprint;
+            MoveSpeed = moveSpeed;
+            WanderRadius = wanderRadius;
+            AgentRadius = agentRadius;
+            Behaviours = behaviours;
         }
     }
 

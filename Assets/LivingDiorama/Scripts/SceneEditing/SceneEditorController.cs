@@ -1,6 +1,7 @@
 using System;
 using LivingDiorama.Core;
 using LivingDiorama.Data;
+using LivingDiorama.Entities;
 using LivingDiorama.Persistence;
 using LivingDiorama.SceneEditing.Commands;
 using LivingDiorama.World;
@@ -376,6 +377,9 @@ namespace LivingDiorama.SceneEditing
             var preview = Instantiate(definition.Prefab, holder.transform);
             preview.name = $"Ghost ({definition.DisplayName})";
 
+            // LivingEntity first: it requires PlacedObject and NavMeshAgent, which can't be removed while it exists.
+            foreach (var brain in preview.GetComponentsInChildren<LivingEntity>(true)) DestroyImmediate(brain);
+            foreach (var agent in preview.GetComponentsInChildren<NavMeshAgent>(true)) DestroyImmediate(agent);
             foreach (var behaviour in preview.GetComponentsInChildren<PlacedObject>(true)) DestroyImmediate(behaviour);
             foreach (var obstacle in preview.GetComponentsInChildren<NavMeshObstacle>(true)) DestroyImmediate(obstacle);
             foreach (var collider in preview.GetComponentsInChildren<Collider>(true)) DestroyImmediate(collider);

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 878f55edd48f76f46b4cb60fd41491d3, type: 3}
+  m_Name: Human
+  m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.Data.EntityDefinition
+  id: human
+  displayName: Human
+  category: 3
+  icon: {fileID: 21300000, guid: 6b97ca82f5be80c40a218e475366b8be, type: 3}
+  prefab: {fileID: 4266015040369461895, guid: c06977f1f595bfd4a813fcd9fba53329, type: 3}
+  defaultScale: 1
+  allowRotation: 0
+  isObstacle: 0
+  footprint: {x: 0.8, y: 0.5}
+  moveSpeed: 1.1
+  wanderRadius: 6
+  agentRadius: 0.25
+  animations: {fileID: 11400000, guid: ca67efded811aeb4f94bba1a6d9ebacd, type: 2}
+  behaviours:
+  - behaviour: 0
+    weight: 3
+    durationRange: {x: 2, y: 5}
+    animation: 
+  - behaviour: 1
+    weight: 5
+    durationRange: {x: 8, y: 15}
+    animation: 
+  - behaviour: 2
+    weight: 2
+    durationRange: {x: 3, y: 5}
+    animation: 

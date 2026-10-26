@@ -43,6 +43,37 @@ namespace LivingDiorama.EditorTools
             return prefab;
         }
 
+        /// <summary>
+        /// Creature layout: like a prop, plus a NavMeshAgent (disabled until the simulation starts),
+        /// a LivingEntity brain and a SpriteAnimator on the visual. Creatures are not NavMesh obstacles.
+        /// </summary>
+        public static GameObject BuildEntity(EntityDefinition definition, Sprite firstFrame, Material material, string path)
+        {
+            var root = new GameObject(definition.DisplayName);
+            var visual = CreateSpriteVisual(root.transform, firstFrame, material, castShadows: true);
+            var animator = visual.gameObject.AddComponent<SpriteAnimator>();
+            animator.Configure(visual, definition.Animations);
+
+            var placed = root.AddComponent<PlacedObject>();
+            placed.Configure(definition, visual);
+
+            var agent = root.AddComponent<NavMeshAgent>();
+            agent.radius = definition.AgentRadius;
+            agent.height = 1.6f;
+            agent.speed = definition.MoveSpeed;
+            agent.updateRotation = false;
+            agent.enabled = false; // LivingEntity enables it once it has been placed on the NavMesh
+
+            var entity = root.AddComponent<LivingDiorama.Entities.LivingEntity>();
+            entity.Configure(animator);
+
+            root.transform.localScale = Vector3.one * definition.DefaultScale;
+
+            var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
+            Object.DestroyImmediate(root);
+            return prefab;
+        }
+
         public static SpriteVisual CreateSpriteVisual(Transform parent, Sprite sprite, Material material, bool castShadows)
         {
             var visualObject = new GameObject("Visual", typeof(MeshFilter), typeof(MeshRenderer), typeof(BoxCollider));

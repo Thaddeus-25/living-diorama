@@ -27,6 +27,22 @@ Pixel-art sprites stand in a lit 3D world, viewed through a fixed, angled orthog
 "Depth" in the properties panel is the object's distance from the front edge (world Z). Since
 the world is 3D, depth alone decides what's drawn in front.
 
+## Living creatures
+Creatures only act in **Preview** mode. In Edit mode they freeze so you can select and move them.
+Each creature's behaviour comes from its definition asset (`Definitions/Human.asset`,
+`Definitions/Cat.asset`), which you can tune in the Inspector:
+
+- **Move Speed**, **Wander Radius**, **Agent Radius**
+- **Behaviours**: a weighted table of Idle / Wander / LookAround / Rest. For Rest, the
+  animation name (`sit`, `sleep`, `stretch`) picks the pose. Weight 0 disables an entry.
+
+Walkable ground is a NavMesh baked from the grass. Trees, rocks and benches carve holes in it
+at runtime, so creatures walk around them wherever you move them.
+
+To add a new creature: add its frames as `Name_clip_frame.png`, an animation set, an
+`EntityDefinition`, and list it in the `ObjectDatabase`. The bootstrap shows the pattern in
+`ProjectBootstrap.Entities`.
+
 ## Generated content
 Placeholder art, materials, definitions, prefabs and the Garden scene are produced by code:
 **Living Diorama → Rebuild Generated Assets** (or the command below).

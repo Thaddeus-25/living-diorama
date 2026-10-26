@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c230d86c0935660409311d77540b963f, type: 3}
+  m_Name: CatAnimations
+  m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.Data.SpriteAnimationSet
+  clips:
+  - name: idle
+    frames:
+    - {fileID: 21300000, guid: 85407701764d06141b43c9d4515cf1f1, type: 3}
+    - {fileID: 21300000, guid: 5ae86da0a72d40a44bd00a0d35523fa6, type: 3}
+    framesPerSecond: 1.2
+    loop: 1
+  - name: walk
+    frames:
+    - {fileID: 21300000, guid: ce221c229f770304c8ff69574ab0df33, type: 3}
+    - {fileID: 21300000, guid: e4638cac67aad784c905eac46a06b2bf, type: 3}
+    - {fileID: 21300000, guid: 26c7cee03fdcad448b9a25b28b087474, type: 3}
+    - {fileID: 21300000, guid: 9fe80da87a6587846a4e0292456b3ee0, type: 3}
+    framesPerSecond: 10
+    loop: 1
+  - name: sit
+    frames:
+    - {fileID: 21300000, guid: a377806270a7e09448a1b366da1d44bc, type: 3}
+    framesPerSecond: 1
+    loop: 1
+  - name: sleep
+    frames:
+    - {fileID: 21300000, guid: ca33f0f7461bf85429ed11bf5723f909, type: 3}
+    - {fileID: 21300000, guid: 077981729308f2d47a144b23bb84ae31, type: 3}
+    framesPerSecond: 0.8
+    loop: 1
+  - name: stretch
+    frames:
+    - {fileID: 21300000, guid: 71631c4700806d54c8f829316813538c, type: 3}
+    framesPerSecond: 1
+    loop: 1
