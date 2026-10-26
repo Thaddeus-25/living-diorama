@@ -20,6 +20,8 @@ namespace LivingDiorama.EditorTools
         {
             /// <summary>Billboarded sprite, pivot at bottom centre.</summary>
             Sprite,
+            /// <summary>Sprite with a centred pivot (e.g. the flat selection ring).</summary>
+            CenteredSprite,
             /// <summary>Repeating ground texture.</summary>
             Tile,
             /// <summary>Smooth texture (no pixel filtering), e.g. the sky.</summary>
@@ -47,6 +49,7 @@ namespace LivingDiorama.EditorTools
             new("Bench", ArtKind.Sprite, PaintBench),
             new("HillsNear", ArtKind.Sprite, () => PaintHills(5, "#79a865", "#95c27c", "#6a9758", 196f, 14f, 8f, 4f, true)),
             new("HillsFar", ArtKind.Sprite, () => PaintHills(9, "#a6c3c4", "#bed6d6", "#98b7b9", 226f, 12f, 7f, 2f, false)),
+            new("SelectionRing", ArtKind.CenteredSprite, PaintSelectionRing),
             new("GrassTile", ArtKind.Tile, PaintGrassTile),
             new("DirtTile", ArtKind.Tile, PaintDirtTile),
             new("SkyGradient", ArtKind.Gradient, PaintSky),
@@ -82,12 +85,12 @@ namespace LivingDiorama.EditorTools
             settings.filterMode = kind == ArtKind.Gradient ? FilterMode.Bilinear : FilterMode.Point;
             settings.wrapMode = kind == ArtKind.Tile ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
 
-            if (kind == ArtKind.Sprite)
+            if (kind is ArtKind.Sprite or ArtKind.CenteredSprite)
             {
                 settings.textureType = TextureImporterType.Sprite;
                 settings.spriteMode = (int)SpriteImportMode.Single;
                 settings.spritePixelsPerUnit = PixelsPerUnit;
-                settings.spriteAlignment = (int)SpriteAlignment.BottomCenter;
+                settings.spriteAlignment = (int)(kind == ArtKind.Sprite ? SpriteAlignment.BottomCenter : SpriteAlignment.Center);
                 settings.spriteMeshType = SpriteMeshType.FullRect;
                 settings.spriteExtrude = 0;
             }
@@ -180,6 +183,22 @@ namespace LivingDiorama.EditorTools
             }
 
             canvas.Outline(PixelCanvas.Hex("#2e2118"));
+            return canvas;
+        }
+
+        private static PixelCanvas PaintSelectionRing()
+        {
+            // 32 px = 2 m across; scaled at runtime to fit the selected object.
+            var canvas = new PixelCanvas(32, 32);
+            var ring = PixelCanvas.Hex("#ffe7a3");
+            var edge = PixelCanvas.Hex("#c98a2e");
+            for (int y = 0; y < canvas.Height; y++)
+            for (int x = 0; x < canvas.Width; x++)
+            {
+                float distance = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(16f, 16f));
+                if (distance <= 15.5f && distance >= 13.5f) canvas.Set(x, y, ring);
+                else if (distance < 13.5f && distance >= 12.5f) canvas.Set(x, y, edge);
+            }
             return canvas;
         }
 

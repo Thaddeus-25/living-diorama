@@ -1,0 +1,242 @@
+/* Warm, low-contrast panels so the diorama stays the focus. */
+
+.hud-root {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    padding: 14px;
+    justify-content: space-between;
+}
+
+.panel {
+    background-color: rgba(31, 30, 36, 0.86);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(255, 240, 210, 0.10);
+    padding: 10px 12px;
+    color: rgb(240, 232, 216);
+}
+
+.spacer {
+    flex-grow: 1;
+}
+
+/* ---------- top bar ---------- */
+
+.top-bar {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.title {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: rgb(250, 226, 170);
+    margin-right: 18px;
+}
+
+.tool-button {
+    height: 30px;
+    padding: 0 14px;
+    margin: 0 4px;
+    border-radius: 8px;
+    border-width: 0;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgb(240, 232, 216);
+    font-size: 13px;
+}
+
+.tool-button:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.tool-button:active {
+    background-color: rgba(255, 255, 255, 0.24);
+}
+
+.tool-button:disabled {
+    opacity: 0.35;
+}
+
+.tool-button.accent {
+    background-color: rgb(214, 160, 72);
+    color: rgb(33, 26, 16);
+    -unity-font-style: bold;
+}
+
+.tool-button.accent:hover {
+    background-color: rgb(232, 182, 96);
+}
+
+.tool-button.danger {
+    background-color: rgba(214, 92, 80, 0.75);
+}
+
+.tool-button.danger:hover {
+    background-color: rgba(232, 112, 98, 0.9);
+}
+
+.grid-toggle {
+    margin-left: 12px;
+    color: rgb(240, 232, 216);
+}
+
+.grid-toggle Label {
+    color: rgb(240, 232, 216);
+}
+
+/* ---------- middle ---------- */
+
+.middle {
+    flex-grow: 1;
+    flex-direction: row;
+    margin: 12px 0;
+    align-items: flex-start;
+}
+
+.panel-title {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: rgb(250, 226, 170);
+    margin-bottom: 8px;
+}
+
+/* ---------- library ---------- */
+
+.library-panel {
+    width: 236px;
+    max-height: 100%;
+}
+
+.category-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.category-tab {
+    height: 24px;
+    padding: 0 8px;
+    margin: 0 4px 4px 0;
+    border-radius: 6px;
+    border-width: 0;
+    font-size: 12px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: rgb(200, 192, 178);
+}
+
+.category-tab:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.category-tab--active {
+    background-color: rgba(250, 226, 170, 0.22);
+    color: rgb(250, 226, 170);
+}
+
+.library-items {
+    flex-shrink: 1;
+}
+
+.library-items .unity-scroll-view__content-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.library-item {
+    width: 94px;
+    height: 104px;
+    margin: 3px;
+    padding: 6px;
+    border-radius: 10px;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(255, 255, 255, 0.06);
+    align-items: center;
+    justify-content: space-between;
+}
+
+.library-item:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.library-item--active {
+    border-color: rgb(214, 160, 72);
+    background-color: rgba(214, 160, 72, 0.18);
+}
+
+.library-item__icon {
+    width: 64px;
+    height: 64px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.library-item__label {
+    font-size: 12px;
+    color: rgb(240, 232, 216);
+    -unity-text-align: middle-center;
+}
+
+/* ---------- properties ---------- */
+
+.properties-panel {
+    width: 320px;
+}
+
+.property {
+    margin: 3px 0;
+}
+
+.property Label {
+    min-width: 90px;
+    color: rgb(220, 212, 196);
+}
+
+/* Number boxes next to sliders and the checkboxes: dark, readable fields. */
+.property .unity-base-text-field__input,
+.property .unity-base-field__input.unity-base-text-field__input {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 240, 210, 0.15);
+    color: rgb(240, 232, 216);
+    min-width: 52px;
+}
+
+.unity-toggle__checkmark {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 240, 210, 0.3);
+    -unity-background-image-tint-color: rgb(250, 226, 170);
+}
+
+.button-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+/* ---------- hints ---------- */
+
+.hint-bar {
+    align-self: center;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background-color: rgba(20, 20, 24, 0.6);
+    color: rgba(245, 238, 225, 0.9);
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.preview-hint {
+    position: absolute;
+    right: 16px;
+    bottom: 14px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    background-color: rgba(20, 20, 24, 0.45);
+    color: rgba(245, 238, 225, 0.85);
+    font-size: 12px;
+    transition-property: opacity;
+    transition-duration: 0.6s;
+}

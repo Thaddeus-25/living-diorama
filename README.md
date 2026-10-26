@@ -12,6 +12,21 @@ Pixel-art sprites stand in a lit 3D world, viewed through a fixed, angled orthog
 2. Open `Assets/LivingDiorama/Scenes/Garden.unity` and press **Play**.
 3. Scroll the mouse wheel to zoom.
 
+## Editor controls (Edit mode)
+| Action | How |
+|---|---|
+| Place an object | Click it in the **Objects** panel, then click the ground (hold **Shift** to place several; right-click or **Esc** to stop) |
+| Select / move | Click an object; drag it |
+| Rotate | **R** (Shift+R reverses) or the Rotation slider |
+| Duplicate / delete | **Ctrl+D** / **Delete**, or the panel buttons |
+| Grid snap (0.5 m) | **G** or the toggle |
+| Undo / redo | **Ctrl+Z** / **Ctrl+Y** (or Ctrl+Shift+Z) |
+| Preview mode | **Tab** or the **Preview** button; **Tab** again returns to editing |
+| Zoom | Mouse wheel |
+
+"Depth" in the properties panel is the object's distance from the front edge (world Z). Since
+the world is 3D, depth alone decides what's drawn in front.
+
 ## Generated content
 Placeholder art, materials, definitions, prefabs and the Garden scene are produced by code:
 **Living Diorama → Rebuild Generated Assets** (or the command below).
@@ -30,8 +45,12 @@ UNITY="/c/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Unity.exe"
 "$UNITY" -batchmode -quit -projectPath . -executeMethod LivingDiorama.EditorTools.ProjectBootstrap.Run -logFile -
 # EditMode tests
 "$UNITY" -batchmode -projectPath . -runTests -testPlatform EditMode -testResults TestResults-EditMode.xml
+# PlayMode tests (load the real Garden scene)
+"$UNITY" -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults TestResults-PlayMode.xml
 # Render the scene to Verification/garden.png
 "$UNITY" -batchmode -quit -projectPath . -executeMethod LivingDiorama.EditorTools.ScreenshotCapture.CaptureGarden
+# Render the scene plus the editor UI to Verification/hud.png
+"$UNITY" -batchmode -projectPath . -runTests -testPlatform PlayMode -testFilter HudScreenshotCapture
 ```
 
 ## World conventions

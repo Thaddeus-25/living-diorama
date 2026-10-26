@@ -1,0 +1,40 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="EditorHud.uss" />
+    <ui:VisualElement name="hud-root" class="hud-root" picking-mode="Ignore">
+        <ui:VisualElement name="top-bar" class="panel top-bar">
+            <ui:Label text="Living Diorama" class="title" />
+            <ui:Button name="undo-button" text="Undo" class="tool-button" tooltip="Undo (Ctrl+Z)" />
+            <ui:Button name="redo-button" text="Redo" class="tool-button" tooltip="Redo (Ctrl+Y)" />
+            <ui:Toggle name="grid-toggle" text="Grid snap" class="grid-toggle" tooltip="Snap to a 0.5 m grid (G)" />
+            <ui:VisualElement class="spacer" picking-mode="Ignore" />
+            <ui:Button name="preview-button" text="Preview" class="tool-button accent" tooltip="Hide the editor and watch the diorama (Tab)" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="middle" class="middle" picking-mode="Ignore">
+            <ui:VisualElement name="library-panel" class="panel library-panel">
+                <ui:Label text="Objects" class="panel-title" />
+                <ui:VisualElement name="category-tabs" class="category-tabs" />
+                <ui:ScrollView name="library-items" class="library-items" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="spacer" picking-mode="Ignore" />
+
+            <ui:VisualElement name="properties-panel" class="panel properties-panel">
+                <ui:Label name="properties-title" text="Properties" class="panel-title" />
+                <ui:Slider name="position-x" label="Left / Right" show-input-field="true" class="property" />
+                <ui:Slider name="position-z" label="Depth" show-input-field="true" class="property" tooltip="Higher values sit further back" />
+                <ui:Slider name="rotation" label="Rotation" low-value="0" high-value="360" show-input-field="true" class="property" />
+                <ui:Slider name="scale" label="Size" low-value="0.5" high-value="2" show-input-field="true" class="property" />
+                <ui:Toggle name="flip" label="Mirror" class="property" />
+                <ui:VisualElement class="button-row">
+                    <ui:Button name="duplicate-button" text="Duplicate" class="tool-button" tooltip="Ctrl+D" />
+                    <ui:Button name="delete-button" text="Delete" class="tool-button danger" tooltip="Delete" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:Label name="hint-bar" class="hint-bar" picking-mode="Ignore" />
+    </ui:VisualElement>
+
+    <ui:Label name="preview-hint" class="preview-hint" text="Press Tab to edit" picking-mode="Ignore" />
+</ui:UXML>

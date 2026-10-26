@@ -1,12 +1,17 @@
 using System.Collections.Generic;
 using LivingDiorama.Core;
 using LivingDiorama.Data;
+using LivingDiorama.SceneEditing;
+using LivingDiorama.UI;
 using LivingDiorama.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.UIElements;
 
 namespace LivingDiorama.EditorTools
 {
@@ -46,7 +51,8 @@ namespace LivingDiorama.EditorTools
             ConfigureAmbientLight();
             CreateGround(materials);
             CreateBackdrop(art, materials, cameraComponent.GetComponent<DioramaCamera>());
-            CreateStartingProps(database);
+            var world = CreateWorld(database);
+            CreateEditor(world, cameraComponent, art, materials);
 
             Billboard.AlignAll(cameraComponent);
 
@@ -160,9 +166,77 @@ namespace LivingDiorama.EditorTools
             Object.DestroyImmediate(visual.GetComponent<BoxCollider>());
         }
 
-        private static void CreateStartingProps(ObjectDatabase database)
+        private static DioramaWorld CreateWorld(ObjectDatabase database)
         {
             var dioramaRoot = new GameObject("Diorama");
+            var world = dioramaRoot.AddComponent<DioramaWorld>();
+            Wire(world, "database", database);
+            SetVector2(world, "gardenSize", GardenSize);
+            CreateStartingProps(dioramaRoot, database);
+            return world;
+        }
+
+        /// <summary>Mode controller, scene editor, selection ring, UI document and event system.</summary>
+        private static void CreateEditor(DioramaWorld world, Camera cam, Dictionary<string, string> art, GeneratedMaterials materials)
+        {
+            var editorObject = new GameObject("SceneEditor");
+            var modes = editorObject.AddComponent<AppModeController>();
+            var editor = editorObject.AddComponent<SceneEditorController>();
+
+            var indicatorObject = new GameObject("SelectionIndicator");
+            indicatorObject.transform.SetParent(editorObject.transform, false);
+            var indicator = indicatorObject.AddComponent<SelectionIndicator>();
+            var ringVisual = PrefabBuilder.CreateSpriteVisual(indicatorObject.transform,
+                ProjectBootstrap.LoadSprite(art["SelectionRing"]), materials.Backdrop, castShadows: false);
+            ringVisual.name = "Ring";
+            ringVisual.Renderer.receiveShadows = false;
+            Object.DestroyImmediate(ringVisual.GetComponent<Billboard>());
+            Object.DestroyImmediate(ringVisual.GetComponent<BoxCollider>());
+            ringVisual.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // lie flat on the ground
+            ringVisual.gameObject.SetActive(false);
+            Wire(indicator, "ring", ringVisual.transform);
+
+            Wire(editor, "world", world);
+            Wire(editor, "worldCamera", cam);
+            Wire(editor, "modes", modes);
+            Wire(editor, "selectionIndicator", indicator);
+
+            var uiObject = new GameObject("EditorUI");
+            var document = uiObject.AddComponent<UIDocument>();
+            document.panelSettings = UiAssetBuilder.EnsureAssets();
+            document.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetBuilder.HudLayoutPath)
+                                       ?? throw new System.IO.FileNotFoundException(UiAssetBuilder.HudLayoutPath);
+            var hud = uiObject.AddComponent<EditorHud>();
+            Wire(hud, "editor", editor);
+            Wire(hud, "modes", modes);
+            Wire(hud, "dioramaCamera", cam.GetComponent<DioramaCamera>());
+
+            // UI Toolkit receives Input System events through the event system.
+            var eventSystemObject = new GameObject("EventSystem");
+            eventSystemObject.AddComponent<EventSystem>();
+            var inputModule = eventSystemObject.AddComponent<InputSystemUIInputModule>();
+            inputModule.AssignDefaultActions();
+        }
+
+        /// <summary>Sets a private [SerializeField] reference the same way the Inspector would.</summary>
+        private static void Wire(Object target, string fieldName, Object value)
+        {
+            var serialized = new SerializedObject(target);
+            var property = serialized.FindProperty(fieldName)
+                           ?? throw new System.ArgumentException($"{target.GetType().Name} has no field '{fieldName}'");
+            property.objectReferenceValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetVector2(Object target, string fieldName, Vector2 value)
+        {
+            var serialized = new SerializedObject(target);
+            serialized.FindProperty(fieldName).vector2Value = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void CreateStartingProps(GameObject dioramaRoot, ObjectDatabase database)
+        {
             foreach (var (id, position) in StartingProps)
             {
                 var definition = database.Find(id);

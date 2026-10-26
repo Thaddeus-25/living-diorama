@@ -3,6 +3,8 @@
     "rootNamespace": "LivingDiorama.EditorTools",
     "references": [
         "LivingDiorama.Runtime",
+        "Unity.InputSystem",
+        "UnityEngine.UI",
         "Unity.AI.Navigation",
         "Unity.AI.Navigation.Editor",
         "Unity.RenderPipelines.Core.Runtime",

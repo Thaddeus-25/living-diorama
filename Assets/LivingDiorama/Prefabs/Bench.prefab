@@ -189,6 +189,7 @@ MonoBehaviour:
   instanceId: 
   definition: {fileID: 11400000, guid: d0c9937cf0a1744449f788d6f86fd85c, type: 2}
   visual: {fileID: 1080545696744333151}
+  flipX: 0
 --- !u!208 &6916725682814350486
 NavMeshObstacle:
   m_ObjectHideFlags: 0
