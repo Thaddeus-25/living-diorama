@@ -18,8 +18,15 @@ namespace LivingDiorama.Entities
         [Tooltip("When the simulation starts, how far (metres) to search for walkable ground.")]
         [SerializeField] private float navMeshSnapDistance = 3f;
 
+        // NavMesh crowd avoidance: lower number = more important. An agent pushes less important
+        // agents out of its way, so creatures standing still get the most important value and are
+        // walked around instead of shoved along.
+        private const int StationaryPriority = 20;
+        private const int MovingPriorityBase = 50;
+
         private readonly StateMachine<LivingEntity> brain = new();
         private AppModeController modes;
+        private int movingPriority;
 
         public PlacedObject Placed { get; private set; }
         public NavMeshAgent Agent { get; private set; }
@@ -104,7 +111,14 @@ namespace LivingDiorama.Entities
                 brain.ChangeState(BehaviourPicker.CreateState(next, Random), this);
             }
 
+            UpdateAvoidancePriority();
             UpdateFacing();
+        }
+
+        private void UpdateAvoidancePriority()
+        {
+            bool moving = Agent.pathPending || Agent.hasPath;
+            Agent.avoidancePriority = moving ? movingPriority : StationaryPriority;
         }
 
         /// <summary>Sprites face right; mirror them while walking left.</summary>
@@ -137,7 +151,9 @@ namespace LivingDiorama.Entities
             Agent.acceleration = 6f;
             Agent.stoppingDistance = 0.1f;
             Agent.obstacleAvoidanceType = ObstacleAvoidanceType.LowQualityObstacleAvoidance;
-            Agent.avoidancePriority = 40 + Random.Next(20);
+            // A little variation so two walking creatures don't negotiate as exact equals.
+            movingPriority = MovingPriorityBase + Random.Next(10);
+            Agent.avoidancePriority = StationaryPriority;
         }
 
         private void OnModeChanged(AppMode mode) => SetSimulating(mode == AppMode.Preview);

@@ -109,6 +109,39 @@ namespace LivingDiorama.Tests
             Assert.GreaterOrEqual(statesSeen.Count(s => s.StartsWith("human:")), 2, "The human should vary its behaviour");
         }
 
+        [UnityTest]
+        public IEnumerator WalkingCreature_DoesNotPushRestingCreature([Values("cat", "human")] string resterId)
+        {
+            modes.SetMode(AppMode.Preview);
+            yield return null;
+            var rester = creatures.First(c => c.Definition.Id == resterId);
+            var walker = creatures.First(c => c != rester);
+
+            // Open ground in front of the bench, away from the rocks.
+            var restSpot = new Vector3(0f, 0f, -4f);
+            rester.Agent.Warp(restSpot);
+            walker.Agent.Warp(new Vector3(-4f, 0f, -4f));
+            rester.StartBehaviour(new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(60f, 60f), "sleep"));
+            // Keep the walker's brain idle and steer it by hand straight through the resting creature.
+            walker.StartBehaviour(new BehaviourWeight(EntityBehaviour.Idle, 1f, new Vector2(60f, 60f)));
+            yield return null;
+            // Worst case: the walker starts out as the more important agent (random priorities used to allow this).
+            walker.Agent.avoidancePriority = 10;
+            rester.Agent.avoidancePriority = 90;
+            restSpot = rester.transform.position;
+            Assert.IsTrue(walker.Agent.SetDestination(new Vector3(4f, 0f, -4f)));
+
+            float maxPush = 0f;
+            for (float t = 0f; t < 8f && (walker.Agent.pathPending || walker.Agent.remainingDistance > 0.2f); t += Time.deltaTime)
+            {
+                maxPush = Mathf.Max(maxPush, Vector3.Distance(restSpot, rester.transform.position));
+                yield return null;
+            }
+
+            Assert.Greater(walker.transform.position.x, 3f, "The walker should get past the resting creature");
+            Assert.Less(maxPush, 0.05f, $"The resting {resterId} was pushed {maxPush:F2} m");
+        }
+
         /// <summary>True when <paramref name="point"/> is inside the obstacle's box, shrunk by a tolerance.</summary>
         private static bool IsInsideFootprint(NavMeshObstacle obstacle, Vector3 point, float tolerance)
         {
