@@ -31,6 +31,16 @@ namespace LivingDiorama.Core
         public Vector3 FocusPoint => focusPoint;
         public float DefaultSize => defaultSize;
 
+        /// <summary>The zoom (orthographic size) the camera is easing towards.</summary>
+        public float TargetSize => targetSize;
+
+        /// <summary>Sets the zoom, clamped to the allowed range. <paramref name="instant"/> skips the easing.</summary>
+        public void SetZoom(float size, bool instant = false)
+        {
+            targetSize = Mathf.Clamp(size, minSize, maxSize);
+            if (instant && cam != null) cam.orthographicSize = targetSize;
+        }
+
         private void Awake()
         {
             cam = GetComponent<Camera>();

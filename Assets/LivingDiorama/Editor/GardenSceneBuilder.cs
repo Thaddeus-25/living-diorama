@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using LivingDiorama.Core;
 using LivingDiorama.Data;
+using LivingDiorama.Persistence;
 using LivingDiorama.SceneEditing;
 using LivingDiorama.UI;
 using LivingDiorama.World;
@@ -224,6 +225,11 @@ namespace LivingDiorama.EditorTools
             Wire(editor, "modes", modes);
             Wire(editor, "selectionIndicator", indicator);
 
+            var saveService = editorObject.AddComponent<SceneSaveService>();
+            Wire(saveService, "world", world);
+            Wire(saveService, "dioramaCamera", cam.GetComponent<DioramaCamera>());
+            Wire(saveService, "editor", editor);
+
             var uiObject = new GameObject("EditorUI");
             var document = uiObject.AddComponent<UIDocument>();
             document.panelSettings = UiAssetBuilder.EnsureAssets();
@@ -233,6 +239,7 @@ namespace LivingDiorama.EditorTools
             Wire(hud, "editor", editor);
             Wire(hud, "modes", modes);
             Wire(hud, "dioramaCamera", cam.GetComponent<DioramaCamera>());
+            Wire(hud, "saveService", saveService);
 
             // UI Toolkit receives Input System events through the event system.
             var eventSystemObject = new GameObject("EventSystem");

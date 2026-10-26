@@ -32,6 +32,31 @@ namespace LivingDiorama.Tests
             var world = Object.FindAnyObjectByType<DioramaWorld>();
             editor.Select(world.Objects.First(o => o.Definition.Id == "bench"));
 
+            yield return CaptureWorldAndUi("hud.png");
+        }
+
+        /// <summary>The Load dialog with two saved scenes (in a temporary folder), saved to Verification/load-dialog.png.</summary>
+        [UnityTest]
+        public IEnumerator CaptureLoadDialog()
+        {
+            yield return SceneManager.LoadSceneAsync("Garden", LoadSceneMode.Single);
+            yield return null;
+
+            var service = Object.FindAnyObjectByType<LivingDiorama.Persistence.SceneSaveService>();
+            string temp = Path.Combine(Path.GetTempPath(), "LivingDioramaTests", System.Guid.NewGuid().ToString("N"));
+            service.UseStore(new LivingDiorama.Persistence.SaveFileStore(temp));
+            service.Save("Autumn Park");
+            service.Save("My Garden");
+
+            var hud = Object.FindAnyObjectByType<LivingDiorama.UI.EditorHud>();
+            hud.Files.OpenLoadDialog();
+            yield return CaptureWorldAndUi("load-dialog.png");
+            Directory.Delete(temp, recursive: true);
+        }
+
+        /// <summary>Renders the camera and the UI Toolkit overlay separately and blends them into one PNG.</summary>
+        private static IEnumerator CaptureWorldAndUi(string fileName)
+        {
             var document = Object.FindAnyObjectByType<UIDocument>();
             var uiTarget = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             var panelSettings = document.panelSettings;
@@ -66,8 +91,8 @@ namespace LivingDiorama.Tests
 
             string folder = Path.Combine(Directory.GetCurrentDirectory(), "Verification");
             Directory.CreateDirectory(folder);
-            File.WriteAllBytes(Path.Combine(folder, "hud.png"), worldImage.EncodeToPNG());
-            Debug.Log($"[HudScreenshot] Saved {Path.Combine(folder, "hud.png")}");
+            File.WriteAllBytes(Path.Combine(folder, fileName), worldImage.EncodeToPNG());
+            Debug.Log($"[HudScreenshot] Saved {Path.Combine(folder, fileName)}");
         }
 
         /// <summary>Preview mode with the human on the bench and the cat napping, saved to Verification/interactions.png.</summary>

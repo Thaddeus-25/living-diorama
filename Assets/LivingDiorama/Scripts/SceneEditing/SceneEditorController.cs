@@ -198,6 +198,19 @@ namespace LivingDiorama.SceneEditing
             lastEditTime = Time.unscaledTime;
         }
 
+        /// <summary>
+        /// Called before the whole scene is replaced (New, Load): drops any half-finished edit,
+        /// selection, placement and the undo history, since it refers to objects that are going away.
+        /// </summary>
+        public void ResetForSceneChange()
+        {
+            pendingEditBefore = null;
+            EndPressWithoutCommit();
+            CancelPlacing();
+            ClearSelection();
+            Commands.Clear();
+        }
+
         public void Undo()
         {
             CommitPendingEdit();

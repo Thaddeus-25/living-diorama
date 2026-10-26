@@ -1,4 +1,5 @@
 using LivingDiorama.Core;
+using LivingDiorama.Persistence;
 using LivingDiorama.SceneEditing;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -19,8 +20,13 @@ namespace LivingDiorama.UI
         [SerializeField] private SceneEditorController editor;
         [SerializeField] private AppModeController modes;
         [SerializeField] private DioramaCamera dioramaCamera;
+        [SerializeField] private SceneSaveService saveService;
         [Tooltip("Seconds the 'Press Tab to edit' hint stays visible after entering Preview.")]
         [SerializeField] private float previewHintSeconds = 3f;
+
+        /// <summary>Exposed for tests and tools that drive the file dialogs.</summary>
+        public SceneFilesController Files => files;
+        public DialogPanel Dialog => dialog;
 
         private UIDocument document;
         private VisualElement hudRoot;
@@ -31,6 +37,9 @@ namespace LivingDiorama.UI
         private Toggle gridToggle;
         private ObjectLibraryPanel library;
         private PropertiesPanel properties;
+        private DialogPanel dialog;
+        private Toast toast;
+        private SceneFilesController files;
         private float previewHintHideTime;
         private VisualElement focusedTextInput;
 
@@ -55,6 +64,9 @@ namespace LivingDiorama.UI
 
             library = new ObjectLibraryPanel(root.Q("library-panel"), editor);
             properties = new PropertiesPanel(root.Q("properties-panel"), editor);
+            dialog = new DialogPanel(root);
+            toast = new Toast(root.Q<Label>("toast"));
+            files = new SceneFilesController(root, saveService, dialog, toast);
             TrackTextInputs(root);
 
             editor.IsPointerOverUi = IsPointerOverUi;
@@ -82,6 +94,7 @@ namespace LivingDiorama.UI
             if (modes != null) modes.ModeChanged -= OnModeChanged;
             library?.Dispose();
             properties?.Dispose();
+            files?.Dispose();
         }
 
         private void Update()
@@ -97,8 +110,28 @@ namespace LivingDiorama.UI
                     ReleaseUiFocus();
             }
 
+            HandleFileShortcuts();
+            toast.Tick();
+
             if (previewHint.resolvedStyle.opacity > 0f && Time.unscaledTime > previewHintHideTime)
                 previewHint.style.opacity = 0f;
+        }
+
+        /// <summary>Enter / Esc for the open dialog, Ctrl+S to save.</summary>
+        private void HandleFileShortcuts()
+        {
+            var keyboard = Keyboard.current;
+            if (keyboard == null) return;
+
+            if (dialog.IsOpen)
+            {
+                if (keyboard.escapeKey.wasPressedThisFrame) dialog.Close();
+                else if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame) dialog.Confirm();
+                return;
+            }
+
+            if (modes.IsEditing && focusedTextInput == null && keyboard.ctrlKey.isPressed && keyboard.sKey.wasPressedThisFrame)
+                files.QuickSave();
         }
 
         /// <summary>True when the screen position (pixels, origin bottom-left) is over a visible panel.</summary>
@@ -106,7 +139,7 @@ namespace LivingDiorama.UI
         {
             var root = document != null ? document.rootVisualElement : null;
             var panel = root?.panel;
-            if (panel == null || hudRoot.resolvedStyle.display == DisplayStyle.None) return false;
+            if (panel == null) return false;
 
             // Panel coordinates have their origin at the top-left.
             var flipped = new Vector2(screenPosition.x, Screen.height - screenPosition.y);
@@ -116,9 +149,10 @@ namespace LivingDiorama.UI
 
         /// <summary>
         /// True while the user types into any text or number field (including the sliders' input
-        /// boxes), so keys like Backspace edit the text instead of deleting the selected object.
+        /// boxes) or a dialog is open, so keys like Backspace edit the text instead of deleting the
+        /// selected object.
         /// </summary>
-        private bool IsTextInputFocused() => focusedTextInput != null;
+        private bool IsTextInputFocused() => focusedTextInput != null || (dialog != null && dialog.IsOpen);
 
         /// <summary>
         /// Removes keyboard focus from the UI. Blur() must be called on the element the focus
@@ -178,6 +212,7 @@ namespace LivingDiorama.UI
             if (!editing)
             {
                 // A hidden field could otherwise keep "typing" focus and block shortcuts.
+                dialog.Close();
                 ReleaseUiFocus();
                 previewHint.style.opacity = 1f;
                 previewHintHideTime = Time.unscaledTime + previewHintSeconds;

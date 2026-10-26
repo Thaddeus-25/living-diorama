@@ -38,6 +38,20 @@
     margin-right: 18px;
 }
 
+.scene-name {
+    font-size: 13px;
+    color: rgb(200, 192, 178);
+    margin-right: 12px;
+    -unity-font-style: italic;
+}
+
+.separator {
+    width: 1px;
+    height: 22px;
+    margin: 0 8px;
+    background-color: rgba(255, 240, 210, 0.15);
+}
+
 .tool-button {
     height: 30px;
     padding: 0 14px;
@@ -239,4 +253,106 @@
     font-size: 12px;
     transition-property: opacity;
     transition-duration: 0.6s;
+}
+
+/* ---------- toast ---------- */
+
+.toast {
+    position: absolute;
+    bottom: 56px;
+    left: 25%;
+    right: 25%;
+    padding: 8px 16px;
+    border-radius: 10px;
+    background-color: rgba(31, 30, 36, 0.92);
+    border-width: 1px;
+    border-color: rgba(250, 226, 170, 0.35);
+    color: rgb(245, 238, 225);
+    font-size: 13px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    transition-property: opacity;
+    transition-duration: 0.4s;
+}
+
+.toast--error {
+    border-color: rgba(232, 112, 98, 0.8);
+    color: rgb(255, 214, 205);
+}
+
+/* ---------- dialog ---------- */
+
+.dialog-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(10, 10, 14, 0.45);
+    align-items: center;
+    justify-content: center;
+}
+
+.dialog {
+    width: 420px;
+    background-color: rgba(31, 30, 36, 0.97);
+    max-height: 70%;
+    padding: 16px 18px;
+}
+
+.dialog-message {
+    color: rgb(220, 212, 196);
+    font-size: 13px;
+    white-space: normal;
+    margin-bottom: 10px;
+}
+
+.dialog-message--error {
+    color: rgb(255, 170, 155);
+}
+
+.dialog-name .unity-base-text-field__input {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 240, 210, 0.2);
+    color: rgb(240, 232, 216);
+    font-size: 14px;
+    padding: 4px 6px;
+}
+
+.dialog-list {
+    max-height: 300px;
+    margin-bottom: 4px;
+}
+
+.dialog-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: 34px;
+    margin: 2px 0;
+    padding: 0 10px;
+    border-radius: 8px;
+    border-width: 0;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.dialog-item:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.dialog-item__label {
+    color: rgb(240, 232, 216);
+    font-size: 13px;
+}
+
+.dialog-item__detail {
+    color: rgb(170, 162, 150);
+    font-size: 11px;
+}
+
+.dialog-empty {
+    color: rgb(190, 182, 170);
+    font-size: 13px;
+    -unity-font-style: italic;
+    padding: 8px 0;
 }

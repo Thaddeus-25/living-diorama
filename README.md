@@ -27,6 +27,20 @@ Pixel-art sprites stand in a lit 3D world, viewed through a fixed, angled orthog
 "Depth" in the properties panel is the object's distance from the front edge (world Z). Since
 the world is 3D, depth alone decides what's drawn in front.
 
+## Saving and loading
+Use **New**, **Save** (or **Ctrl+S**) and **Load** in the top bar. A `*` after the scene name means
+unsaved changes; New and Load ask before discarding them.
+
+- Scenes are JSON files in `%USERPROFILE%\AppData\LocalLow\Thaddeus\Living Diorama\Scenes`.
+- Each file stores a format `version`, the scene name, the save time, the environment
+  (`environmentId`, camera zoom) and every object (`definitionId`, id, position, yaw, scale,
+  mirror). Creatures are objects too.
+- Loading checks the whole file first. An empty, corrupt or newer-format file is refused with a
+  message and the current scene is left as it was. Objects of unknown types are skipped and listed.
+- Loading clears the undo history.
+- Changing the format: bump `SceneSerializer.CurrentVersion` and add an upgrade step in
+  `SaveMigrations`.
+
 ## Living creatures
 Creatures only act in **Preview** mode. In Edit mode they freeze so you can select and move them.
 Each creature's behaviour comes from its definition asset (`Definitions/Human.asset`,

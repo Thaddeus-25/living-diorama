@@ -3,6 +3,11 @@
     <ui:VisualElement name="hud-root" class="hud-root" picking-mode="Ignore">
         <ui:VisualElement name="top-bar" class="panel top-bar">
             <ui:Label text="Living Diorama" class="title" />
+            <ui:Label name="scene-name" class="scene-name" />
+            <ui:Button name="new-button" text="New" class="tool-button" tooltip="Start an empty garden" />
+            <ui:Button name="save-button" text="Save" class="tool-button" tooltip="Save this scene (Ctrl+S)" />
+            <ui:Button name="load-button" text="Load" class="tool-button" tooltip="Open a saved scene" />
+            <ui:VisualElement class="separator" picking-mode="Ignore" />
             <ui:Button name="undo-button" text="Undo" class="tool-button" tooltip="Undo (Ctrl+Z)" />
             <ui:Button name="redo-button" text="Redo" class="tool-button" tooltip="Redo (Ctrl+Y)" />
             <ui:Toggle name="grid-toggle" text="Grid snap" class="grid-toggle" tooltip="Snap to a 0.5 m grid (G)" />
@@ -37,4 +42,20 @@
     </ui:VisualElement>
 
     <ui:Label name="preview-hint" class="preview-hint" text="Press Tab to edit" picking-mode="Ignore" />
+
+    <ui:Label name="toast" class="toast" picking-mode="Ignore" />
+
+    <!-- Modal dialog for New / Save / Load. The overlay blocks clicks to the world while open. -->
+    <ui:VisualElement name="dialog-overlay" class="dialog-overlay">
+        <ui:VisualElement name="dialog" class="panel dialog">
+            <ui:Label name="dialog-title" class="panel-title" />
+            <ui:Label name="dialog-message" class="dialog-message" />
+            <ui:TextField name="dialog-name" class="dialog-name" max-length="60" />
+            <ui:ScrollView name="dialog-list" class="dialog-list" />
+            <ui:VisualElement class="button-row">
+                <ui:Button name="dialog-cancel" text="Cancel" class="tool-button" />
+                <ui:Button name="dialog-confirm" text="OK" class="tool-button accent" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
 </ui:UXML>
