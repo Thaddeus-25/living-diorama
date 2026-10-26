@@ -32,6 +32,7 @@ namespace LivingDiorama.UI
         private ObjectLibraryPanel library;
         private PropertiesPanel properties;
         private float previewHintHideTime;
+        private VisualElement focusedTextInput;
 
         private void OnEnable()
         {
@@ -54,6 +55,7 @@ namespace LivingDiorama.UI
 
             library = new ObjectLibraryPanel(root.Q("library-panel"), editor);
             properties = new PropertiesPanel(root.Q("properties-panel"), editor);
+            TrackTextInputs(root);
 
             editor.IsPointerOverUi = IsPointerOverUi;
             editor.IsTextInputFocused = IsTextInputFocused;
@@ -84,10 +86,16 @@ namespace LivingDiorama.UI
 
         private void Update()
         {
-            // Scrolling over a panel (e.g. the library list) shouldn't also zoom the camera.
             var mouse = Mouse.current;
-            if (mouse != null && dioramaCamera != null)
-                dioramaCamera.ZoomEnabled = !IsPointerOverUi(mouse.position.ReadValue());
+            if (mouse != null)
+            {
+                bool overUi = IsPointerOverUi(mouse.position.ReadValue());
+                // Scrolling over a panel (e.g. the library list) shouldn't also zoom the camera.
+                if (dioramaCamera != null) dioramaCamera.ZoomEnabled = !overUi;
+                // Clicking the world finishes any typing, so shortcuts work again.
+                if (!overUi && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame))
+                    ReleaseUiFocus();
+            }
 
             if (previewHint.resolvedStyle.opacity > 0f && Time.unscaledTime > previewHintHideTime)
                 previewHint.style.opacity = 0f;
@@ -110,13 +118,34 @@ namespace LivingDiorama.UI
         /// True while the user types into any text or number field (including the sliders' input
         /// boxes), so keys like Backspace edit the text instead of deleting the selected object.
         /// </summary>
-        private bool IsTextInputFocused()
+        private bool IsTextInputFocused() => focusedTextInput != null;
+
+        /// <summary>
+        /// Removes keyboard focus from the UI. Blur() must be called on the element the focus
+        /// controller reports (e.g. the Slider), not on the inner text box, or nothing happens.
+        /// </summary>
+        public void ReleaseUiFocus()
         {
-            var focused = document.rootVisualElement.focusController?.focusedElement as VisualElement;
-            for (var element = focused; element != null; element = element.parent)
-                if (element.ClassListContains(TextInputBaseField<string>.ussClassName))
-                    return true;
-            return false;
+            document.rootVisualElement.focusController?.focusedElement?.Blur();
+            focusedTextInput = null;
+        }
+
+        /// <summary>
+        /// Tracks focus on every text input under <paramref name="container"/>. The callbacks sit on
+        /// the inputs themselves because UI Toolkit retargets focus to composite controls: while a
+        /// slider's number box is edited, focusController.focusedElement reports the Slider.
+        /// Call again for UI that is added later.
+        /// </summary>
+        public void TrackTextInputs(VisualElement container)
+        {
+            container.Query(className: TextInputBaseField<string>.inputUssClassName).ForEach(input =>
+            {
+                input.RegisterCallback<FocusInEvent>(_ => focusedTextInput = input);
+                input.RegisterCallback<FocusOutEvent>(_ =>
+                {
+                    if (focusedTextInput == input) focusedTextInput = null;
+                });
+            });
         }
 
         private void EnterPreview() => modes.SetMode(AppMode.Preview);
@@ -148,6 +177,8 @@ namespace LivingDiorama.UI
             previewHint.style.display = editing ? DisplayStyle.None : DisplayStyle.Flex;
             if (!editing)
             {
+                // A hidden field could otherwise keep "typing" focus and block shortcuts.
+                ReleaseUiFocus();
                 previewHint.style.opacity = 1f;
                 previewHintHideTime = Time.unscaledTime + previewHintSeconds;
             }
