@@ -50,7 +50,7 @@ MonoBehaviour:
   capacity: 1
   approachOffset: {x: 0, y: 0, z: -0.7}
   animation: sit
-  faceLeft: 1
+  faceLeft: 0
 --- !u!1 &3482142669384688336
 GameObject:
   m_ObjectHideFlags: 0

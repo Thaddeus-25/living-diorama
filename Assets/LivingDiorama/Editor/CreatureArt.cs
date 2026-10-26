@@ -114,19 +114,49 @@ namespace LivingDiorama.EditorTools
             canvas.FillRect(frontHand, 10 - drop, 2, 1, Skin);
         }
 
+        /// <summary>
+        /// Seated, facing the camera, so one frame works on any seat without mirroring.
+        /// Hips sit at bench-seat height; the thighs point at the viewer, so only the knees show.
+        /// </summary>
         private static void PaintHumanSitting(PixelCanvas canvas)
         {
-            // Hips at seat height; thighs forward, shins down.
-            canvas.FillRect(6, 9, 5, 2, PantsShade);
-            canvas.FillRect(10, 1, 2, 9, PantsShade);
-            canvas.FillRect(6, 9, 6, 2, Pants);
-            canvas.FillRect(11, 1, 2, 10, Pants);
-            canvas.FillRect(10, 1, 4, 1, Shoe);
+            // Shins hanging down from the knees, with shoes.
+            canvas.FillRect(5, 2, 2, 7, Pants);
+            canvas.FillRect(9, 2, 2, 7, Pants);
+            canvas.FillRect(6, 2, 1, 7, PantsShade);
+            canvas.FillRect(10, 2, 1, 7, PantsShade);
+            canvas.FillRect(5, 1, 2, 1, Shoe);
+            canvas.FillRect(9, 1, 2, 1, Shoe);
 
-            PaintUpperBody(canvas, torsoBottom: 11);
+            // Knees (foreshortened thighs) and lap.
+            canvas.FillRect(4, 9, 8, 2, Pants);
+            canvas.FillRect(4, 9, 8, 1, PantsShade);
 
-            DrawLimb(canvas, 8, 18, 10, 12, 2, Shirt);
-            canvas.FillRect(10, 12, 2, 1, Skin);
+            // Arms at the sides, behind the torso edges.
+            canvas.FillRect(3, 12, 1, 7, ShirtShade);
+            canvas.FillRect(12, 12, 1, 7, ShirtShade);
+
+            // Torso with belt; light comes from the left, so the right edge is shaded.
+            canvas.FillRect(4, 11, 8, 8, Shirt);
+            canvas.FillRect(11, 12, 1, 7, ShirtShade);
+            canvas.FillRect(4, 11, 8, 1, PantsShade);
+
+            // Hands resting on the lap.
+            canvas.FillRect(4, 11, 2, 1, Skin);
+            canvas.FillRect(10, 11, 2, 1, SkinShade);
+
+            // Neck and head, front view: two eyes, hair framing the face.
+            canvas.FillRect(7, 19, 2, 1, SkinShade);
+            canvas.FillRect(5, 20, 6, 6, Skin);
+            canvas.FillRect(10, 20, 1, 5, SkinShade);
+            canvas.Set(6, 22, Eye);
+            canvas.Set(9, 22, Eye);
+            canvas.FillRect(7, 21, 2, 1, SkinShade); // mouth
+
+            canvas.FillRect(5, 25, 6, 2, Hair);
+            canvas.FillRect(4, 21, 1, 5, Hair);
+            canvas.FillRect(11, 21, 1, 5, Hair);
+            canvas.FillRect(6, 27, 4, 1, Hair);
         }
 
         /// <summary>Torso (8 px), neck and head with hair. <paramref name="torsoBottom"/> is the belt row.</summary>

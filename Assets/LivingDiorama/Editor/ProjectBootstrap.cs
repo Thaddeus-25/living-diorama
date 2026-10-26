@@ -52,8 +52,8 @@ namespace LivingDiorama.EditorTools
                 new InteractionPointSpec
                 {
                     Name = "SeatRight", Type = InteractionType.Sit, EntityIds = new[] { "human" }, Animation = "sit",
-                    LocalPosition = new Vector3(0.45f, 0f, -0.08f), ApproachOffset = new Vector3(0f, 0f, -0.7f),
-                    FaceLeft = true
+                    // The sit frame faces the camera, so neither seat mirrors the sprite.
+                    LocalPosition = new Vector3(0.45f, 0f, -0.08f), ApproachOffset = new Vector3(0f, 0f, -0.7f)
                 },
             },
             ["tree"] = new[]
