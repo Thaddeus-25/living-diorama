@@ -1,0 +1,182 @@
+using System.Collections.Generic;
+using LivingDiorama.Core;
+using LivingDiorama.Data;
+using LivingDiorama.World;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+
+namespace LivingDiorama.EditorTools
+{
+    /// <summary>
+    /// Builds Garden.unity: camera, sun, diorama base, painted backdrop and a few starting props.
+    /// World layout: X = left/right, Y = up, Z = depth (away from the viewer). 1 unit = 1 m = 16 px.
+    /// </summary>
+    internal static class GardenSceneBuilder
+    {
+        public const string ScenePath = ProjectBootstrap.ScenesFolder + "/Garden.unity";
+
+        /// <summary>Editable area (x = width, y = depth) in metres.</summary>
+        public static readonly Vector2 GardenSize = new(20f, 12f);
+
+        /// <summary>Thickness of the dirt block under the grass, for the diorama look.</summary>
+        public const float BaseDepth = 1.5f;
+
+        private static readonly (string id, Vector3 position)[] StartingProps =
+        {
+            ("tree", new Vector3(-7f, 0f, 3.5f)),
+            ("tree", new Vector3(-3.2f, 0f, 4.8f)),
+            ("tree", new Vector3(6.5f, 0f, 4.2f)),
+            ("tree", new Vector3(8.2f, 0f, -2.5f)),
+            ("rock", new Vector3(3f, 0f, -1.5f)),
+            ("rock", new Vector3(-5.5f, 0f, -2.8f)),
+            ("bench", new Vector3(0.5f, 0f, 1.5f)),
+        };
+
+        public static void Build(Dictionary<string, string> art)
+        {
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var materials = GeneratedMaterials.LoadFromDisk();
+            var database = AssetDatabase.LoadAssetAtPath<ObjectDatabase>(ProjectBootstrap.DatabasePath);
+
+            var cameraComponent = CreateCamera(materials);
+            CreateSun();
+            ConfigureAmbientLight();
+            CreateGround(materials);
+            CreateBackdrop(art, materials, cameraComponent.GetComponent<DioramaCamera>());
+            CreateStartingProps(database);
+
+            Billboard.AlignAll(cameraComponent);
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+        }
+
+        private static Camera CreateCamera(GeneratedMaterials materials)
+        {
+            var cameraObject = new GameObject("Main Camera") { tag = "MainCamera" };
+            var cam = cameraObject.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.nearClipPlane = 0.3f;
+            cam.farClipPlane = 200f;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = PixelCanvas.Hex("#b5d6ef");
+            cameraObject.AddComponent<AudioListener>();
+
+            var cameraData = cam.GetUniversalAdditionalCameraData();
+            cameraData.renderPostProcessing = true;
+            cameraData.antialiasing = AntialiasingMode.None;
+
+            var dioramaCamera = cameraObject.AddComponent<DioramaCamera>();
+            dioramaCamera.ApplyPose();
+            cam.orthographicSize = dioramaCamera.DefaultSize;
+
+            // The sky is a gradient quad parented to the camera, so it always fills the view.
+            var sky = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            sky.name = "Sky";
+            Object.DestroyImmediate(sky.GetComponent<Collider>());
+            sky.transform.SetParent(cameraObject.transform, false);
+            sky.transform.localPosition = new Vector3(0f, 0f, 150f);
+            sky.transform.localScale = new Vector3(48f, 28f, 1f);
+            var skyRenderer = sky.GetComponent<MeshRenderer>();
+            skyRenderer.sharedMaterial = materials.Sky;
+            skyRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            skyRenderer.receiveShadows = false;
+
+            return cam;
+        }
+
+        private static void CreateSun()
+        {
+            var sunObject = new GameObject("Sun");
+            sunObject.transform.rotation = Quaternion.Euler(45f, -35f, 0f);
+            var sun = sunObject.AddComponent<Light>();
+            sun.type = LightType.Directional;
+            sun.color = PixelCanvas.Hex("#fff1d6");
+            sun.intensity = 1.3f;
+            sun.shadows = LightShadows.Soft;
+            sun.shadowStrength = 0.65f;
+        }
+
+        private static void ConfigureAmbientLight()
+        {
+            RenderSettings.skybox = null;
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = PixelCanvas.Hex("#a9bdd6");
+            RenderSettings.ambientEquatorColor = PixelCanvas.Hex("#97a58f");
+            RenderSettings.ambientGroundColor = PixelCanvas.Hex("#6b5a48");
+        }
+
+        private static void CreateGround(GeneratedMaterials materials)
+        {
+            var environment = new GameObject("Environment");
+
+            // Grass top: a quad lying flat, its collider is what drag-and-drop raycasts hit.
+            var grass = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            grass.name = "Ground";
+            grass.transform.SetParent(environment.transform, false);
+            grass.transform.SetPositionAndRotation(Vector3.zero, Quaternion.Euler(90f, 0f, 0f));
+            grass.transform.localScale = new Vector3(GardenSize.x, GardenSize.y, 1f);
+            var grassRenderer = grass.GetComponent<MeshRenderer>();
+            grassRenderer.sharedMaterial = materials.Grass;
+            grassRenderer.shadowCastingMode = ShadowCastingMode.Off;
+
+            // Dirt block below: top sits just under the grass to avoid z-fighting.
+            var dirt = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            dirt.name = "DioramaBase";
+            Object.DestroyImmediate(dirt.GetComponent<Collider>());
+            dirt.transform.SetParent(environment.transform, false);
+            dirt.transform.position = new Vector3(0f, -BaseDepth * 0.5f - 0.01f, 0f);
+            dirt.transform.localScale = new Vector3(GardenSize.x, BaseDepth, GardenSize.y);
+            dirt.GetComponent<MeshRenderer>().sharedMaterial = materials.Dirt;
+        }
+
+        private static void CreateBackdrop(Dictionary<string, string> art, GeneratedMaterials materials, DioramaCamera dioramaCamera)
+        {
+            var backdrop = new GameObject("Backdrop");
+
+            // Each layer is placed in camera space: vBase is how far up the screen its bottom edge
+            // sits (in metres from the focus point), depth is how far behind the focus point it is.
+            CreateBackdropLayer(backdrop.transform, "HillsFar", ProjectBootstrap.LoadSprite(art["HillsFar"]),
+                materials.Backdrop, dioramaCamera, vBase: -8.1f, depth: 22f);
+            CreateBackdropLayer(backdrop.transform, "HillsNear", ProjectBootstrap.LoadSprite(art["HillsNear"]),
+                materials.Backdrop, dioramaCamera, vBase: -7.6f, depth: 16f);
+        }
+
+        private static void CreateBackdropLayer(Transform parent, string name, Sprite sprite, Material material,
+            DioramaCamera dioramaCamera, float vBase, float depth)
+        {
+            var layer = new GameObject(name);
+            layer.transform.SetParent(parent, false);
+            var cameraRotation = Quaternion.Euler(dioramaCamera.Pitch, 0f, 0f);
+            layer.transform.position = dioramaCamera.FocusPoint
+                                       + cameraRotation * Vector3.up * vBase
+                                       + cameraRotation * Vector3.forward * depth;
+
+            var visual = PrefabBuilder.CreateSpriteVisual(layer.transform, sprite, material, castShadows: false);
+            visual.Renderer.receiveShadows = false;
+            Object.DestroyImmediate(visual.GetComponent<BoxCollider>());
+        }
+
+        private static void CreateStartingProps(ObjectDatabase database)
+        {
+            var dioramaRoot = new GameObject("Diorama");
+            foreach (var (id, position) in StartingProps)
+            {
+                var definition = database.Find(id);
+                if (definition == null || definition.Prefab == null)
+                {
+                    Debug.LogWarning($"[GardenSceneBuilder] No prefab for '{id}', skipping.");
+                    continue;
+                }
+
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(definition.Prefab);
+                instance.transform.SetParent(dioramaRoot.transform, false);
+                instance.transform.position = position;
+                instance.GetComponent<PlacedObject>().AssignNewId();
+            }
+        }
+    }
+}
