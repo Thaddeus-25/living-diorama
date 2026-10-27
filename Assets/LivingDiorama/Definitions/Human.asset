@@ -46,3 +46,8 @@ MonoBehaviour:
     durationRange: {x: 6, y: 12}
     animation: 
     interaction: 0
+  - behaviour: 4
+    weight: 2
+    durationRange: {x: 6, y: 12}
+    animation: 
+    interaction: 2

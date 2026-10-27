@@ -41,6 +41,16 @@ namespace LivingDiorama.EditorTools
             ("rock", new Vector3(3f, 0f, -1.5f)),
             ("rock", new Vector3(-5.5f, 0f, -2.8f)),
             ("bench", new Vector3(0.5f, 0f, 1.5f)),
+            ("streetlight", new Vector3(-1.4f, 0f, 2.2f)),
+            ("lantern", new Vector3(2.1f, 0f, 1.7f)),
+            ("flowers", new Vector3(-4.5f, 0f, 0.8f)),
+            ("flowers", new Vector3(5.2f, 0f, 1.2f)),
+            ("bush", new Vector3(4.2f, 0f, 3.6f)),
+            ("mushrooms", new Vector3(-6.3f, 0f, 2.6f)),
+            ("fence", new Vector3(0.6f, 0f, 5.3f)),
+            ("fence", new Vector3(2.6f, 0f, 5.3f)),
+            ("sign", new Vector3(-8.4f, 0f, 0.4f)),
+            ("campfire", new Vector3(-6.3f, 0f, -0.3f)),
             ("human", new Vector3(-1.5f, 0f, -0.8f)),
             ("cat", new Vector3(2.2f, 0f, 0.6f)),
         };
@@ -264,7 +274,8 @@ namespace LivingDiorama.EditorTools
         {
             var cycleObject = new GameObject("DayNightCycle");
             var cycle = cycleObject.AddComponent<DayNightCycle>();
-            Wire(cycle, "sun", Object.FindAnyObjectByType<Light>());
+            // By name: lamps in the scene are lights too.
+            Wire(cycle, "sun", GameObject.Find("Sun").GetComponent<Light>());
             Wire(cycle, "sky", cam.transform.Find("Sky").GetComponent<Renderer>());
             Wire(cycle, "worldCamera", cam);
 

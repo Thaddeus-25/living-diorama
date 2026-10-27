@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3720b94985033f34cb4b801005c8265e, type: 3}
+  m_Name: Fence
+  m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.Data.ObjectDefinition
+  id: fence
+  displayName: Fence
+  category: 2
+  icon: {fileID: 21300000, guid: da1fa42450f90ae4f96bd2d094bfab46, type: 3}
+  prefab: {fileID: 2349987322804730388, guid: c5f237660835c55488d1d4437c8efbad, type: 3}
+  defaultScale: 1
+  allowRotation: 1
+  isObstacle: 1
+  footprint: {x: 2, y: 0.3}

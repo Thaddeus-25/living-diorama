@@ -9,6 +9,8 @@ namespace LivingDiorama.Data
         /// <summary>Sit down (e.g. on a bench).</summary>
         Sit,
         /// <summary>Lie down and sleep (e.g. a cat napping by a tree).</summary>
-        Sleep
+        Sleep,
+        /// <summary>Stand by something warm (e.g. a campfire).</summary>
+        Warm
     }
 }

@@ -217,7 +217,27 @@ namespace LivingDiorama.Tests
             var nap = Using(cat);
             Assert.IsNotNull(nap, $"Cat never settled (state: {cat.CurrentState?.Name})");
             Assert.AreEqual("sleep", cat.Animator.CurrentClipName);
-            Assert.AreEqual("tree", nap.Point.GetComponentInParent<PlacedObject>().Definition.Id);
+            // Trees and the campfire both offer nap spots; whichever is nearest is fine.
+            CollectionAssert.Contains(new[] { "tree", "campfire" }, nap.Point.GetComponentInParent<PlacedObject>().Definition.Id);
+        }
+
+        [UnityTest]
+        public IEnumerator Human_WarmsUpByTheCampfire_FacingIt()
+        {
+            modes.SetMode(AppMode.Preview);
+            yield return null;
+            cat.StartBehaviour(new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(60f, 60f), "sleep"));
+            human.StartBehaviour(BehaviourWeight.Interact(InteractionType.Warm, 1f, new Vector2(5f, 5f)));
+            Assert.AreEqual("Seek Warm", human.CurrentState.Name);
+
+            yield return WaitFor(() => Using(human)?.IsHolding == true, 20f);
+            var warming = Using(human);
+            Assert.IsNotNull(warming, $"Human never reached the fire (state: {human.CurrentState?.Name})");
+            var fire = warming.Point.GetComponentInParent<PlacedObject>();
+            Assert.AreEqual("campfire", fire.Definition.Id);
+            Assert.AreEqual(SpriteAnimationSet.Idle, human.Animator.CurrentClipName);
+            bool fireIsToTheLeft = fire.transform.position.x < human.transform.position.x;
+            Assert.AreEqual(fireIsToTheLeft, human.Placed.FlipX, "Faces the fire");
         }
 
         [UnityTest]
@@ -235,9 +255,12 @@ namespace LivingDiorama.Tests
             foreach (var seat in seats) Assert.IsTrue(seat.TryReserve(standIn));
 
             human.StartBehaviour(Sit(5f));
+            // Checked straight away: a frame later the human may already have picked something else
+            // (e.g. warming up at the campfire), which is fine.
+            var seek = (SeekInteractionState)human.CurrentState;
+            Assert.IsNull(seek.Target, "No seat should be found");
+            Assert.IsTrue(seek.IsFinished, "With every seat taken, the human gives up at once");
             yield return null;
-            Assert.IsFalse(human.CurrentState is SeekInteractionState { Target: not null },
-                "With every seat taken, the human should do something else");
         }
     }
 }

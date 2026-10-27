@@ -62,7 +62,7 @@ namespace LivingDiorama.EditorTools
         public static Dictionary<string, string> GenerateAll(string folder)
         {
             var paths = new Dictionary<string, string>();
-            foreach (var spec in PropSpecs.Concat(CreatureArt.Specs()))
+            foreach (var spec in PropSpecs.Concat(CreatureArt.Specs()).Concat(DecorationArt.Specs()))
             {
                 string assetPath = $"{folder}/{spec.Name}.png";
                 paths[spec.Name] = assetPath;

@@ -23,6 +23,14 @@ namespace LivingDiorama.Tests
         [TestCase("tree")]
         [TestCase("rock")]
         [TestCase("bench")]
+        [TestCase("bush")]
+        [TestCase("flowers")]
+        [TestCase("mushrooms")]
+        [TestCase("fence")]
+        [TestCase("streetlight")]
+        [TestCase("sign")]
+        [TestCase("lantern")]
+        [TestCase("campfire")]
         public void Definition_HasPrefabWithPlacedObjectAndVisual(string id)
         {
             var definition = database.Find(id);
@@ -65,6 +73,41 @@ namespace LivingDiorama.Tests
             Assert.IsNull(shadow.GetComponent<Billboard>(), "Lies flat instead of facing the camera");
             Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, shadow.GetComponent<MeshRenderer>().shadowCastingMode);
             Assert.AreEqual(90f, shadow.localEulerAngles.x, 0.01f);
+        }
+
+        [TestCase("streetlight")]
+        [TestCase("lantern")]
+        [TestCase("campfire")]
+        public void LightSources_HaveANightLight(string id)
+        {
+            var prefab = database.Find(id).Prefab;
+            var nightLight = prefab.GetComponentInChildren<NightLight>(true);
+            Assert.IsNotNull(nightLight, $"{id} has no NightLight");
+            var light = nightLight.GetComponent<Light>();
+            Assert.AreEqual(LightType.Point, light.type);
+            Assert.AreEqual(LightShadows.None, light.shadows, "Small lights shouldn't cast shadows");
+        }
+
+        [Test]
+        public void Campfire_IsAnimated_HasEmbers_AndPlacesToWarmUpAndNap()
+        {
+            var campfire = database.Find("campfire").Prefab;
+            var animator = campfire.GetComponentInChildren<SpriteAnimator>(true);
+            Assert.IsNotNull(animator, "Flames should animate");
+            Assert.IsNotNull(campfire.GetComponentInChildren<ParticleSystem>(true), "Embers missing");
+
+            var points = campfire.GetComponentsInChildren<LivingDiorama.Interactions.InteractionPoint>(true);
+            Assert.AreEqual(2, System.Array.FindAll(points, p => p.Type == InteractionType.Warm).Length);
+            Assert.AreEqual(1, System.Array.FindAll(points, p => p.Type == InteractionType.Sleep).Length);
+        }
+
+        [TestCase("flowers")]
+        [TestCase("mushrooms")]
+        [TestCase("lantern")]
+        public void SmallDecorations_DontBlockWalking(string id)
+        {
+            Assert.IsFalse(database.Find(id).IsObstacle);
+            Assert.IsNull(database.Find(id).Prefab.GetComponent<NavMeshObstacle>());
         }
 
         [Test]

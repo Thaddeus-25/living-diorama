@@ -5125,6 +5125,7 @@ MonoBehaviour:
   type: 1
   supportedEntityIds:
   - cat
+  - dog
   capacity: 1
   approachOffset: {x: 0, y: 0, z: 0}
   animation: sleep

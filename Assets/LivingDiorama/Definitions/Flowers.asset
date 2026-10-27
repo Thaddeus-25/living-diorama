@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3720b94985033f34cb4b801005c8265e, type: 3}
+  m_Name: Flowers
+  m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.Data.ObjectDefinition
+  id: flowers
+  displayName: Flowers
+  category: 1
+  icon: {fileID: 21300000, guid: 98a4e027ec436944b91c7bbc85509b87, type: 3}
+  prefab: {fileID: 6824348224885354449, guid: c5f55da5d01007f46982813b7de7b3b0, type: 3}
+  defaultScale: 1
+  allowRotation: 1
+  isObstacle: 0
+  footprint: {x: 1.2, y: 0.6}

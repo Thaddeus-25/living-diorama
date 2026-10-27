@@ -62,6 +62,22 @@ namespace LivingDiorama.EditorTools
             return Save(material, path);
         }
 
+        /// <summary>Additive, unlit particles that glow (embers, sparks).</summary>
+        public static Material CreateParticleGlow(string path, Texture texture)
+        {
+            var material = new Material(FindShader("Universal Render Pipeline/Particles/Unlit")) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
+            material.SetTexture("_BaseMap", texture);
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 2f); // additive
+            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)BlendMode.One);
+            material.SetFloat("_ZWrite", 0f);
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)RenderQueue.Transparent;
+            return Save(material, path);
+        }
+
         public static Material CreateUnlitTextured(string path, Texture texture)
         {
             var material = new Material(FindShader(UnlitShader)) { name = System.IO.Path.GetFileNameWithoutExtension(path) };

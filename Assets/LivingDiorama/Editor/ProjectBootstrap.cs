@@ -27,12 +27,23 @@ namespace LivingDiorama.EditorTools
         public const string AnimationsFolder = DefinitionsFolder + "/Animations";
         public const string DatabasePath = DefinitionsFolder + "/ObjectDatabase.asset";
 
-        /// <summary>Static props in the MVP. Add a row here (plus art) to add a new prop.</summary>
+        /// <summary>
+        /// Static props. Add a row here (plus art) to add a new prop. Obstacle props block walking;
+        /// the footprint (width, depth in metres) is the blocked area and the selection ring size.
+        /// </summary>
         private static readonly PropSpec[] Props =
         {
             new("tree", "Tree", ObjectCategory.Nature, "Tree", true, new Vector2(1.0f, 0.8f)),
             new("rock", "Rock", ObjectCategory.Nature, "Rock", true, new Vector2(1.4f, 0.9f)),
+            new("bush", "Bush", ObjectCategory.Nature, "Bush", true, new Vector2(1.6f, 0.8f)),
+            new("flowers", "Flowers", ObjectCategory.Nature, "Flowers", false, new Vector2(1.2f, 0.6f)),
+            new("mushrooms", "Mushrooms", ObjectCategory.Nature, "Mushrooms", false, new Vector2(0.6f, 0.4f)),
             new("bench", "Bench", ObjectCategory.Structures, "Bench", true, new Vector2(1.9f, 0.6f)),
+            new("fence", "Fence", ObjectCategory.Structures, "Fence", true, new Vector2(2.0f, 0.3f)),
+            new("streetlight", "Streetlight", ObjectCategory.Structures, "Streetlight", true, new Vector2(0.4f, 0.4f)),
+            new("sign", "Sign", ObjectCategory.Structures, "Sign", true, new Vector2(0.9f, 0.3f)),
+            new("lantern", "Lantern", ObjectCategory.Decorations, "Lantern", false, new Vector2(0.5f, 0.4f)),
+            new("campfire", "Campfire", ObjectCategory.Decorations, CreatureArt.FrameName("Campfire", "idle", 0), true, new Vector2(1.0f, 1.0f)),
         };
 
         /// <summary>
@@ -60,8 +71,27 @@ namespace LivingDiorama.EditorTools
             {
                 new InteractionPointSpec
                 {
-                    Name = "NapSpot", Type = InteractionType.Sleep, EntityIds = new[] { "cat" }, Animation = "sleep",
+                    Name = "NapSpot", Type = InteractionType.Sleep, EntityIds = new[] { "cat", "dog" }, Animation = "sleep",
                     LocalPosition = new Vector3(0.1f, 0f, -0.8f)
+                },
+            },
+            ["campfire"] = new[]
+            {
+                // Stand on either side of the fire, facing it.
+                new InteractionPointSpec
+                {
+                    Name = "WarmLeft", Type = InteractionType.Warm, EntityIds = new[] { "human" }, Animation = "idle",
+                    LocalPosition = new Vector3(-1.0f, 0f, -0.1f)
+                },
+                new InteractionPointSpec
+                {
+                    Name = "WarmRight", Type = InteractionType.Warm, EntityIds = new[] { "human" }, Animation = "idle",
+                    LocalPosition = new Vector3(1.0f, 0f, -0.1f), FaceLeft = true
+                },
+                new InteractionPointSpec
+                {
+                    Name = "NapSpot", Type = InteractionType.Sleep, EntityIds = new[] { "cat", "dog" }, Animation = "sleep",
+                    LocalPosition = new Vector3(0.2f, 0f, -0.95f)
                 },
             },
         };
@@ -79,6 +109,7 @@ namespace LivingDiorama.EditorTools
                     new BehaviourWeight(EntityBehaviour.Wander, 5f, new Vector2(8f, 15f)),
                     new BehaviourWeight(EntityBehaviour.LookAround, 2f, new Vector2(3f, 5f)),
                     BehaviourWeight.Interact(InteractionType.Sit, 3f, new Vector2(6f, 12f)),
+                    BehaviourWeight.Interact(InteractionType.Warm, 2f, new Vector2(6f, 12f)),
                 }),
             new("cat", "Cat", CreatureArt.CatClips, new Vector2(0.9f, 0.5f),
                 moveSpeed: 1.5f, wanderRadius: 4f, agentRadius: 0.2f, new[]
@@ -107,9 +138,7 @@ namespace LivingDiorama.EditorTools
                 var sprite = LoadSprite(art[spec.ArtName]);
                 var definition = LoadOrCreateDefinition(spec, sprite);
                 PropInteractions.TryGetValue(spec.Id, out var interactionPoints);
-                System.Action<GameObject, LivingDiorama.World.SpriteVisual> decorate = spec.Id == "tree"
-                    ? (root, visual) => LeafEffectBuilder.AddFallingLeaves(root, visual, materials.Leaf)
-                    : null;
+                var decorate = DecorationFor(spec.Id, materials, art);
                 var prefab = PrefabBuilder.BuildProp(definition, sprite, materials.SpriteLit,
                     $"{PrefabsFolder}/{spec.DisplayName}.prefab", interactionPoints, decorate);
                 definition.SetPrefab(prefab);
@@ -119,7 +148,7 @@ namespace LivingDiorama.EditorTools
 
             foreach (var spec in Entities)
             {
-                var animations = BuildAnimationSet(spec, art);
+                var animations = BuildAnimationSet(spec.DisplayName, spec.Clips, art);
                 var definition = LoadOrCreateEntityDefinition(spec, animations);
                 var firstFrame = animations.Find(SpriteAnimationSet.Idle).frames[0];
                 var prefab = PrefabBuilder.BuildEntity(definition, firstFrame, materials.SpriteLit,
@@ -152,6 +181,7 @@ namespace LivingDiorama.EditorTools
             {
                 SpriteLit = MaterialFactory.CreateSpriteLit($"{MaterialsFolder}/M_SpriteLit.mat"),
                 Backdrop = MaterialFactory.CreateBackdrop($"{MaterialsFolder}/M_Backdrop.mat"),
+                Ember = MaterialFactory.CreateParticleGlow($"{MaterialsFolder}/M_Ember.mat", LoadTexture(art["Ember"])),
                 Leaf = MaterialFactory.CreateParticleLit($"{MaterialsFolder}/M_Leaf.mat", LoadTexture(art["Leaf"])),
                 ContactShadow = MaterialFactory.CreateTransparentTint($"{MaterialsFolder}/M_ContactShadow.mat", new Color(0.06f, 0.1f, 0.04f, 0.6f)),
                 Sky = MaterialFactory.CreateUnlitTextured($"{MaterialsFolder}/M_Sky.mat", LoadTexture(art["SkyGradient"])),
@@ -174,15 +204,37 @@ namespace LivingDiorama.EditorTools
             return definition;
         }
 
-        private static SpriteAnimationSet BuildAnimationSet(EntitySpec spec, Dictionary<string, string> art)
+        /// <summary>Lights, effects and animation that some props get on top of the standard layout.</summary>
+        private static System.Action<GameObject, LivingDiorama.World.SpriteVisual> DecorationFor(string id,
+            GeneratedMaterials materials, Dictionary<string, string> art)
         {
-            var animationSet = LoadOrCreate<SpriteAnimationSet>($"{AnimationsFolder}/{spec.DisplayName}Animations.asset");
+            switch (id)
+            {
+                case "tree":
+                    return (root, visual) => LeafEffectBuilder.AddFallingLeaves(root, visual, materials.Leaf);
+                case "streetlight":
+                    return (_, visual) => PropDecorations.AddLamp(visual, height: 2.6f, range: 5f, nightIntensity: 2f);
+                case "lantern":
+                    return (_, visual) => PropDecorations.AddLamp(visual, height: 0.7f, range: 3f, nightIntensity: 1.2f);
+                case "campfire":
+                    var flames = BuildAnimationSet("Campfire", DecorationArt.CampfireClips, art);
+                    return (_, visual) => PropDecorations.AddCampfire(visual, flames, materials.Ember);
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>Builds a creature's or prop's flipbook from frames named Name_clip_frame.</summary>
+        private static SpriteAnimationSet BuildAnimationSet(string displayName, CreatureArt.ClipSpec[] clipSpecs,
+            Dictionary<string, string> art)
+        {
+            var animationSet = LoadOrCreate<SpriteAnimationSet>($"{AnimationsFolder}/{displayName}Animations.asset");
             var clips = new List<SpriteAnimationSet.Clip>();
-            foreach (var clipSpec in spec.Clips)
+            foreach (var clipSpec in clipSpecs)
             {
                 var frames = new Sprite[clipSpec.Frames];
                 for (int i = 0; i < frames.Length; i++)
-                    frames[i] = LoadSprite(art[CreatureArt.FrameName(spec.DisplayName, clipSpec.Name, i)]);
+                    frames[i] = LoadSprite(art[CreatureArt.FrameName(displayName, clipSpec.Name, i)]);
                 clips.Add(new SpriteAnimationSet.Clip { name = clipSpec.Name, frames = frames, framesPerSecond = clipSpec.FramesPerSecond });
             }
             animationSet.SetClips(clips);
@@ -302,6 +354,7 @@ namespace LivingDiorama.EditorTools
         public Material Backdrop;
         public Material ContactShadow;
         public Material Leaf;
+        public Material Ember;
         public Material Sky;
         public Material Grass;
         public Material Dirt;
@@ -314,6 +367,7 @@ namespace LivingDiorama.EditorTools
                 Backdrop = Load("M_Backdrop"),
                 ContactShadow = Load("M_ContactShadow"),
                 Leaf = Load("M_Leaf"),
+                Ember = Load("M_Ember"),
                 Sky = Load("M_Sky"),
                 Grass = Load("M_Grass"),
                 Dirt = Load("M_Dirt"),
