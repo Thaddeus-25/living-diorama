@@ -11,9 +11,12 @@ namespace LivingDiorama.World
     public class SpriteVisual : MonoBehaviour
     {
         private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         [SerializeField] private Sprite sprite;
         [SerializeField] private bool flipX;
+        [Tooltip("Multiplies the sprite's colours (e.g. to mark a placement preview).")]
+        [SerializeField] private Color tint = Color.white;
 
         private MeshFilter meshFilter;
         private MeshRenderer meshRenderer;
@@ -41,6 +44,17 @@ namespace LivingDiorama.World
             }
         }
 
+        public Color Tint
+        {
+            get => tint;
+            set
+            {
+                if (tint == value) return;
+                tint = value;
+                Apply();
+            }
+        }
+
         public MeshRenderer Renderer => meshRenderer != null ? meshRenderer : meshRenderer = GetComponent<MeshRenderer>();
 
         private void OnEnable() => Apply();
@@ -56,8 +70,11 @@ namespace LivingDiorama.World
             meshFilter.sharedMesh = SpriteMeshCache.Get(sprite);
 
             propertyBlock ??= new MaterialPropertyBlock();
-            Renderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.Clear();
             if (sprite != null) propertyBlock.SetTexture(BaseMapId, sprite.texture);
+            // Only override the colour when tinted, so materials that rely on their own colour
+            // (e.g. the dark contact shadow) keep it.
+            if (tint != Color.white) propertyBlock.SetColor(BaseColorId, tint);
             Renderer.SetPropertyBlock(propertyBlock);
 
             if (sprite != null && TryGetComponent(out BoxCollider box))

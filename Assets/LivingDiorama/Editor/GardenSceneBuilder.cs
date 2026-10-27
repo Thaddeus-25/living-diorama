@@ -219,18 +219,13 @@ namespace LivingDiorama.EditorTools
             var modes = editorObject.AddComponent<AppModeController>();
             var editor = editorObject.AddComponent<SceneEditorController>();
 
-            var indicatorObject = new GameObject("SelectionIndicator");
-            indicatorObject.transform.SetParent(editorObject.transform, false);
-            var indicator = indicatorObject.AddComponent<SelectionIndicator>();
-            var ringVisual = PrefabBuilder.CreateSpriteVisual(indicatorObject.transform,
-                ProjectBootstrap.LoadSprite(art["SelectionRing"]), materials.Backdrop, castShadows: false);
-            ringVisual.name = "Ring";
-            ringVisual.Renderer.receiveShadows = false;
-            Object.DestroyImmediate(ringVisual.GetComponent<Billboard>());
-            Object.DestroyImmediate(ringVisual.GetComponent<BoxCollider>());
-            ringVisual.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // lie flat on the ground
-            ringVisual.gameObject.SetActive(false);
-            Wire(indicator, "ring", ringVisual.transform);
+            var ringSprite = ProjectBootstrap.LoadSprite(art["SelectionRing"]);
+            var indicator = CreateRing(editorObject.transform, "SelectionIndicator", ringSprite, materials.Backdrop,
+                Color.white, pulse: 0.05f);
+            // Faint, still and cool-coloured, so it reads as "you could click this", not "selected".
+            var hoverIndicator = CreateRing(editorObject.transform, "HoverIndicator", ringSprite, materials.Backdrop,
+                new Color(0.62f, 0.78f, 0.95f), pulse: 0f);
+            Wire(editor, "hoverIndicator", hoverIndicator);
 
             Wire(editor, "world", world);
             Wire(editor, "worldCamera", cam);
@@ -258,6 +253,28 @@ namespace LivingDiorama.EditorTools
             eventSystemObject.AddComponent<EventSystem>();
             var inputModule = eventSystemObject.AddComponent<InputSystemUIInputModule>();
             inputModule.AssignDefaultActions();
+        }
+
+        private static SelectionIndicator CreateRing(Transform parent, string name, Sprite sprite, Material material,
+            Color tint, float pulse)
+        {
+            var indicatorObject = new GameObject(name);
+            indicatorObject.transform.SetParent(parent, false);
+            var indicator = indicatorObject.AddComponent<SelectionIndicator>();
+            var ringVisual = PrefabBuilder.CreateSpriteVisual(indicatorObject.transform, sprite, material, castShadows: false);
+            ringVisual.name = "Ring";
+            ringVisual.Renderer.receiveShadows = false;
+            Object.DestroyImmediate(ringVisual.GetComponent<Billboard>());
+            Object.DestroyImmediate(ringVisual.GetComponent<BoxCollider>());
+            ringVisual.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // lie flat on the ground
+            ringVisual.gameObject.SetActive(false);
+            Wire(indicator, "ring", ringVisual.transform);
+
+            var serialized = new SerializedObject(indicator);
+            serialized.FindProperty("tint").colorValue = tint;
+            serialized.FindProperty("pulseAmount").floatValue = pulse;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return indicator;
         }
 
         /// <summary>Sets a private [SerializeField] reference the same way the Inspector would.</summary>

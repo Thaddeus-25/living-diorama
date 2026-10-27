@@ -23,6 +23,8 @@ namespace LivingDiorama.SceneEditing
         [SerializeField] private Camera worldCamera;
         [SerializeField] private AppModeController modes;
         [SerializeField] private SelectionIndicator selectionIndicator;
+        [Tooltip("Faint ring under the object the mouse is over.")]
+        [SerializeField] private SelectionIndicator hoverIndicator;
 
         [Header("Tuning")]
         [SerializeField] private float gridStep = 0.5f;
@@ -34,6 +36,7 @@ namespace LivingDiorama.SceneEditing
         [SerializeField] private Vector3 duplicateOffset = new(1f, 0f, -0.5f);
 
         private static readonly Plane GroundPlane = new(Vector3.up, Vector3.zero);
+        private static readonly Color PreviewTint = new(0.65f, 0.85f, 1f, 1f);
 
         // Press / drag state.
         private PlacedObject pressedObject;
@@ -41,6 +44,8 @@ namespace LivingDiorama.SceneEditing
         private Vector3 grabOffset;
         private PlacedObjectData dragBefore;
         private bool isDragging;
+
+        private PlacedObject hovered;
 
         // Placement state.
         private ObjectDefinition placingDefinition;
@@ -53,6 +58,9 @@ namespace LivingDiorama.SceneEditing
         public CommandStack Commands { get; } = new();
         public DioramaWorld World => world;
         public PlacedObject Selected { get; private set; }
+
+        /// <summary>The object under the mouse (never the selected one), or null.</summary>
+        public PlacedObject Hovered => hovered;
         public bool GridSnapEnabled { get; private set; }
         public ObjectDefinition PlacingDefinition => placingDefinition;
         public bool IsDragging => isDragging;
@@ -96,6 +104,10 @@ namespace LivingDiorama.SceneEditing
             Vector2 screenPosition = mouse.position.ReadValue();
             bool overUi = IsPointerOverUi?.Invoke(screenPosition) ?? false;
 
+            // Show what a click would select, except while placing, dragging or over a panel.
+            bool canHover = !overUi && placingDefinition == null && !isDragging;
+            SetHovered(canHover ? PickObject(screenPosition) : null);
+
             if (placingDefinition != null)
             {
                 UpdatePlacement(mouse, screenPosition, overUi);
@@ -116,8 +128,19 @@ namespace LivingDiorama.SceneEditing
             SetHeld(Selected, false);
             Selected = placed;
             SetHeld(placed, true);
+            if (placed != null && placed == hovered) SetHovered(null);
             if (selectionIndicator != null) selectionIndicator.Show(placed);
             SelectionChanged?.Invoke();
+        }
+
+        /// <summary>Marks the object under the mouse with the hover ring (the selected object never gets one).</summary>
+        public void SetHovered(PlacedObject placed)
+        {
+            if (placed != null && placed == Selected) placed = null;
+            // Unity's == treats a destroyed object as null; its ring hides itself.
+            if (placed == hovered) return;
+            hovered = placed;
+            if (hoverIndicator != null) hoverIndicator.Show(placed);
         }
 
         public void StartPlacing(ObjectDefinition definition)
@@ -415,6 +438,13 @@ namespace LivingDiorama.SceneEditing
             foreach (var particles in preview.GetComponentsInChildren<ParticleSystem>(true)) DestroyImmediate(particles.gameObject);
             foreach (var collider in preview.GetComponentsInChildren<Collider>(true)) DestroyImmediate(collider);
 
+            // Tinted and shadowless so it reads as a preview, not a real object.
+            foreach (var visual in preview.GetComponentsInChildren<SpriteVisual>(true))
+            {
+                visual.Tint = PreviewTint;
+                visual.Renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+
             preview.transform.localScale = Vector3.one * definition.DefaultScale;
             preview.transform.SetParent(null, false);
             Destroy(holder);
@@ -463,6 +493,7 @@ namespace LivingDiorama.SceneEditing
         private void OnModeChanged(AppMode mode)
         {
             if (mode == AppMode.Edit) return;
+            SetHovered(null);
             CommitPendingEdit();
             EndPress();
             CancelPlacing();

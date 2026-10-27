@@ -197,6 +197,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.World.SpriteVisual
   sprite: {fileID: 21300000, guid: a07d7dd787f8ac14e9ed9c8ff263474e, type: 3}
   flipX: 0
+  tint: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &6584621366103001427
 MonoBehaviour:
   m_ObjectHideFlags: 0

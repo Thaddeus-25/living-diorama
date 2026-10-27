@@ -87,6 +87,44 @@ namespace LivingDiorama.Tests
         }
 
         [UnityTest]
+        public IEnumerator Hover_ShowsFaintRing_ButNotOnTheSelection()
+        {
+            var rock = world.Objects.First(o => o.Definition.Id == "rock");
+            var tree = world.Objects.First(o => o.Definition.Id == "tree");
+            var hoverRing = Object.FindObjectsByType<SelectionIndicator>(FindObjectsSortMode.None).First(i => i.name == "HoverIndicator");
+
+            editor.SetHovered(rock);
+            yield return null;
+            Assert.AreSame(rock, editor.Hovered);
+            Assert.AreSame(rock.transform, hoverRing.Target);
+
+            editor.Select(rock);
+            Assert.IsNull(editor.Hovered, "Selecting the hovered object hands it over to the selection ring");
+            editor.SetHovered(rock);
+            Assert.IsNull(editor.Hovered, "The selected object never gets a hover ring");
+
+            editor.SetHovered(tree);
+            Assert.AreSame(tree, editor.Hovered);
+            modes.SetMode(AppMode.Preview);
+            yield return null;
+            Assert.IsNull(editor.Hovered, "No hover ring in Preview");
+        }
+
+        [UnityTest]
+        public IEnumerator PlacementPreview_IsTintedAndCastsNoShadow()
+        {
+            editor.StartPlacing(world.Database.Find("tree"));
+            yield return null;
+            // The preview stays hidden until the mouse is over the ground, so include inactive objects.
+            var ghost = Object.FindObjectsByType<SpriteVisual>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .First(v => v.GetComponentInParent<PlacedObject>() == null && v.transform.root.name.StartsWith("Ghost"));
+            Assert.AreNotEqual(Color.white, ghost.Tint);
+            Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, ghost.Renderer.shadowCastingMode);
+            Assert.IsEmpty(ghost.transform.root.GetComponentsInChildren<ParticleSystem>(true), "No falling leaves from a preview");
+            editor.CancelPlacing();
+        }
+
+        [UnityTest]
         public IEnumerator PreviewMode_ClearsSelectionAndToggleReturnsToEdit()
         {
             editor.Select(world.Objects.First());
