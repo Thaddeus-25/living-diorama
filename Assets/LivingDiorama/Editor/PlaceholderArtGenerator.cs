@@ -51,6 +51,7 @@ namespace LivingDiorama.EditorTools
             new("HillsNear", ArtKind.Sprite, () => PaintHills(5, "#79a865", "#95c27c", "#6a9758", 196f, 14f, 8f, 4f, true)),
             new("HillsFar", ArtKind.Sprite, () => PaintHills(9, "#a6c3c4", "#bed6d6", "#98b7b9", 226f, 12f, 7f, 2f, false)),
             new("SelectionRing", ArtKind.CenteredSprite, PaintSelectionRing),
+            new("ContactShadow", ArtKind.CenteredSprite, PaintContactShadow),
             new("GrassTile", ArtKind.Tile, PaintGrassTile),
             new("DirtTile", ArtKind.Tile, PaintDirtTile),
             new("SkyGradient", ArtKind.Gradient, PaintSky),
@@ -199,6 +200,26 @@ namespace LivingDiorama.EditorTools
                 float distance = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(16f, 16f));
                 if (distance <= 15.5f && distance >= 13.5f) canvas.Set(x, y, ring);
                 else if (distance < 13.5f && distance >= 12.5f) canvas.Set(x, y, edge);
+            }
+            return canvas;
+        }
+
+        /// <summary>
+        /// Soft oval for under creatures' feet: white with alpha fading out in a few hard steps,
+        /// which keeps the pixel-art look. The material tints it dark.
+        /// </summary>
+        private static PixelCanvas PaintContactShadow()
+        {
+            var canvas = new PixelCanvas(32, 16);
+            for (int y = 0; y < canvas.Height; y++)
+            for (int x = 0; x < canvas.Width; x++)
+            {
+                float dx = (x + 0.5f - 16f) / 16f;
+                float dy = (y + 0.5f - 8f) / 8f;
+                float distance = Mathf.Sqrt(dx * dx + dy * dy);
+                if (distance >= 1f) continue;
+                float alpha = Mathf.Ceil((1f - distance * distance) * 4f) / 4f; // 4 steps
+                canvas.Set(x, y, new Color(1f, 1f, 1f, alpha));
             }
             return canvas;
         }

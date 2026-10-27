@@ -27,6 +27,24 @@ namespace LivingDiorama.EditorTools
             return Save(material, path);
         }
 
+        /// <summary>Unlit, alpha-blended and tinted; for soft ground decals like contact shadows.</summary>
+        public static Material CreateTransparentTint(string path, Color tint)
+        {
+            var material = new Material(FindShader(UnlitShader)) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
+            material.SetColor("_BaseColor", tint);
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            material.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)RenderQueue.Transparent;
+            return Save(material, path);
+        }
+
         public static Material CreateUnlitTextured(string path, Texture texture)
         {
             var material = new Material(FindShader(UnlitShader)) { name = System.IO.Path.GetFileNameWithoutExtension(path) };

@@ -55,6 +55,18 @@ namespace LivingDiorama.Tests
             Assert.AreEqual(0f, sprite.bounds.min.y, 0.001f);
         }
 
+        [TestCase("human")]
+        [TestCase("cat")]
+        public void Creatures_HaveAFlatUnclickableContactShadow(string id)
+        {
+            var shadow = database.Find(id).Prefab.transform.Find("ContactShadow");
+            Assert.IsNotNull(shadow, "Contact shadow missing");
+            Assert.IsNull(shadow.GetComponent<Collider>(), "Must not block clicks");
+            Assert.IsNull(shadow.GetComponent<Billboard>(), "Lies flat instead of facing the camera");
+            Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, shadow.GetComponent<MeshRenderer>().shadowCastingMode);
+            Assert.AreEqual(90f, shadow.localEulerAngles.x, 0.01f);
+        }
+
         [TestCase("Assets/LivingDiorama/Settings/PC_Renderer.asset")]
         [TestCase("Assets/LivingDiorama/Settings/Mobile_Renderer.asset")]
         public void Renderers_HaveTiltShiftWithMaterial(string path)

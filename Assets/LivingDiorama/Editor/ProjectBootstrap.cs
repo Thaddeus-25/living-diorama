@@ -119,7 +119,8 @@ namespace LivingDiorama.EditorTools
                 var animations = BuildAnimationSet(spec, art);
                 var definition = LoadOrCreateEntityDefinition(spec, animations);
                 var firstFrame = animations.Find(SpriteAnimationSet.Idle).frames[0];
-                var prefab = PrefabBuilder.BuildEntity(definition, firstFrame, materials.SpriteLit, $"{PrefabsFolder}/{spec.DisplayName}.prefab");
+                var prefab = PrefabBuilder.BuildEntity(definition, firstFrame, materials.SpriteLit,
+                    LoadSprite(art["ContactShadow"]), materials.ContactShadow, $"{PrefabsFolder}/{spec.DisplayName}.prefab");
                 definition.SetPrefab(prefab);
                 EditorUtility.SetDirty(definition);
                 definitions.Add(definition);
@@ -148,6 +149,7 @@ namespace LivingDiorama.EditorTools
             {
                 SpriteLit = MaterialFactory.CreateSpriteLit($"{MaterialsFolder}/M_SpriteLit.mat"),
                 Backdrop = MaterialFactory.CreateBackdrop($"{MaterialsFolder}/M_Backdrop.mat"),
+                ContactShadow = MaterialFactory.CreateTransparentTint($"{MaterialsFolder}/M_ContactShadow.mat", new Color(0.06f, 0.1f, 0.04f, 0.6f)),
                 Sky = MaterialFactory.CreateUnlitTextured($"{MaterialsFolder}/M_Sky.mat", LoadTexture(art["SkyGradient"])),
                 Grass = MaterialFactory.CreateGround($"{MaterialsFolder}/M_Grass.mat", LoadTexture(art["GrassTile"]),
                     new Vector2(GardenSceneBuilder.GardenSize.x, GardenSceneBuilder.GardenSize.y)),
@@ -294,6 +296,7 @@ namespace LivingDiorama.EditorTools
     {
         public Material SpriteLit;
         public Material Backdrop;
+        public Material ContactShadow;
         public Material Sky;
         public Material Grass;
         public Material Dirt;
@@ -304,6 +307,7 @@ namespace LivingDiorama.EditorTools
             {
                 SpriteLit = Load("M_SpriteLit"),
                 Backdrop = Load("M_Backdrop"),
+                ContactShadow = Load("M_ContactShadow"),
                 Sky = Load("M_Sky"),
                 Grass = Load("M_Grass"),
                 Dirt = Load("M_Dirt"),

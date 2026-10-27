@@ -58,10 +58,12 @@ namespace LivingDiorama.EditorTools
         /// Creature layout: like a prop, plus a NavMeshAgent (disabled until the simulation starts),
         /// a LivingEntity brain and a SpriteAnimator on the visual. Creatures are not NavMesh obstacles.
         /// </summary>
-        public static GameObject BuildEntity(EntityDefinition definition, Sprite firstFrame, Material material, string path)
+        public static GameObject BuildEntity(EntityDefinition definition, Sprite firstFrame, Material material,
+            Sprite shadowSprite, Material shadowMaterial, string path)
         {
             var root = new GameObject(definition.DisplayName);
             var visual = CreateSpriteVisual(root.transform, firstFrame, material, castShadows: true);
+            CreateContactShadow(root.transform, shadowSprite, shadowMaterial, definition.Footprint.x);
             var animator = visual.gameObject.AddComponent<SpriteAnimator>();
             animator.Configure(visual, definition.Animations);
 
@@ -83,6 +85,23 @@ namespace LivingDiorama.EditorTools
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        /// <summary>
+        /// A soft dark oval lying on the ground under a creature's feet, so it looks grounded even
+        /// when the sun's shadow falls behind it. Child of the root, so it follows automatically.
+        /// </summary>
+        private static void CreateContactShadow(Transform parent, Sprite sprite, Material material, float width)
+        {
+            var shadow = CreateSpriteVisual(parent, sprite, material, castShadows: false);
+            shadow.name = "ContactShadow";
+            shadow.Renderer.receiveShadows = false;
+            Object.DestroyImmediate(shadow.GetComponent<Billboard>());
+            Object.DestroyImmediate(shadow.GetComponent<BoxCollider>()); // not clickable
+            shadow.transform.localPosition = new Vector3(0f, 0.015f, 0f); // just above the grass
+            shadow.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // lie flat
+            // The sprite is 2 m wide; scale it to roughly the creature's width.
+            shadow.transform.localScale = Vector3.one * (width * 1.3f / 2f);
         }
 
         public static SpriteVisual CreateSpriteVisual(Transform parent, Sprite sprite, Material material, bool castShadows)
