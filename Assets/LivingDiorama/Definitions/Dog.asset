@@ -24,6 +24,7 @@ MonoBehaviour:
   moveSpeed: 1.8
   wanderRadius: 7
   agentRadius: 0.25
+  habitat: 0
   animations: {fileID: 11400000, guid: 3da37e83f226a0a4f8c537eb8832fc18, type: 2}
   behaviours:
   - behaviour: 0

@@ -31,6 +31,8 @@ namespace LivingDiorama.Tests
         [TestCase("sign")]
         [TestCase("lantern")]
         [TestCase("campfire")]
+        [TestCase("pond")]
+        [TestCase("fish")]
         public void Definition_HasPrefabWithPlacedObjectAndVisual(string id)
         {
             var definition = database.Find(id);

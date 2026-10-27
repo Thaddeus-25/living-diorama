@@ -37,6 +37,7 @@ namespace LivingDiorama.SceneEditing
 
         private static readonly Plane GroundPlane = new(Vector3.up, Vector3.zero);
         private static readonly Color PreviewTint = new(0.65f, 0.85f, 1f, 1f);
+        private static readonly Color InvalidPreviewTint = new(1f, 0.45f, 0.45f, 1f);
         private static readonly RaycastHit[] RaycastBuffer = new RaycastHit[64];
 
         // Press / drag state.
@@ -73,6 +74,8 @@ namespace LivingDiorama.SceneEditing
         public Func<bool> IsTextInputFocused { get; set; }
 
         public event Action SelectionChanged;
+        /// <summary>A placement was refused; the argument explains why (shown to the user).</summary>
+        public event Action<string> PlacementRejected;
         /// <summary>Grid snap or placement mode changed.</summary>
         public event Action ToolStateChanged;
         /// <summary>The selected object's state changed (drag, edit, undo...).</summary>
@@ -168,6 +171,22 @@ namespace LivingDiorama.SceneEditing
             if (GridSnapEnabled == enabled) return;
             GridSnapEnabled = enabled;
             ToolStateChanged?.Invoke();
+        }
+
+        /// <summary>Whether the object may go here. Water creatures need water; everything else goes anywhere.</summary>
+        public static bool CanPlaceAt(ObjectDefinition definition, Vector3 position)
+        {
+            if (definition is EntityDefinition { Habitat: Habitat.Water })
+                return WaterArea.FindContaining(position, 0.2f) != null;
+            return true;
+        }
+
+        /// <summary>Places the object if allowed; otherwise raises <see cref="PlacementRejected"/> and returns null.</summary>
+        public PlacedObject TryPlaceAt(ObjectDefinition definition, Vector3 position)
+        {
+            if (CanPlaceAt(definition, position)) return PlaceAt(definition, position);
+            PlacementRejected?.Invoke($"{definition.DisplayName} can only live in water. Place a pond first, then put them in it.");
+            return null;
         }
 
         public PlacedObject PlaceAt(ObjectDefinition definition, Vector3 position)
@@ -347,7 +366,7 @@ namespace LivingDiorama.SceneEditing
         private static void SetHeld(PlacedObject placed, bool held)
         {
             // Unity's null check also skips objects that were destroyed (e.g. by undo).
-            if (placed != null && placed.TryGetComponent(out LivingEntity creature)) creature.SetHeld(held);
+            if (placed != null && placed.TryGetComponent(out IHoldable creature)) creature.SetHeld(held);
         }
 
         /// <summary>A moving obstacle shouldn't carve the NavMesh on every frame of a drag.</summary>
@@ -399,20 +418,24 @@ namespace LivingDiorama.SceneEditing
             }
 
             bool onGround = TryGetGroundPoint(screenPosition, out var groundPoint);
+            var spot = world.ClampToGarden(GridSnapEnabled ? GridSnap.Snap(groundPoint, gridStep) : groundPoint);
             if (ghost != null)
             {
                 ghost.SetActive(onGround && !overUi);
                 if (onGround)
                 {
-                    var target = GridSnapEnabled ? GridSnap.Snap(groundPoint, gridStep) : groundPoint;
-                    ghost.transform.position = world.ClampToGarden(target);
+                    ghost.transform.position = spot;
+                    // Red where it can't go (e.g. fish on dry land).
+                    var tint = CanPlaceAt(placingDefinition, spot) ? PreviewTint : InvalidPreviewTint;
+                    foreach (var visual in ghost.GetComponentsInChildren<SpriteVisual>()) visual.Tint = tint;
                 }
             }
 
             if (onGround && !overUi && mouse.leftButton.wasPressedThisFrame)
             {
                 var definition = placingDefinition;
-                var placed = PlaceAt(definition, ghost != null ? ghost.transform.position : world.ClampToGarden(groundPoint));
+                var placed = TryPlaceAt(definition, spot);
+                if (placed == null) return;
                 // Shift keeps the tool active for placing several in a row.
                 bool keepPlacing = Keyboard.current != null && Keyboard.current.shiftKey.isPressed;
                 if (!keepPlacing)
@@ -441,6 +464,9 @@ namespace LivingDiorama.SceneEditing
             foreach (var obstacle in preview.GetComponentsInChildren<NavMeshObstacle>(true)) DestroyImmediate(obstacle);
             // Otherwise creatures could try to sit on the preview.
             foreach (var point in preview.GetComponentsInChildren<InteractionPoint>(true)) DestroyImmediate(point);
+            // A preview pond isn't water and a preview fish doesn't swim.
+            foreach (var swimmer in preview.GetComponentsInChildren<FishSwimmer>(true)) DestroyImmediate(swimmer);
+            foreach (var water in preview.GetComponentsInChildren<WaterArea>(true)) DestroyImmediate(water);
             // No effects (falling leaves) from a preview.
             foreach (var particles in preview.GetComponentsInChildren<ParticleSystem>(true)) DestroyImmediate(particles.gameObject);
             foreach (var collider in preview.GetComponentsInChildren<Collider>(true)) DestroyImmediate(collider);

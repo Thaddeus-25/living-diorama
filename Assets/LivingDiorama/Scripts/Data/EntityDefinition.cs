@@ -19,6 +19,15 @@ namespace LivingDiorama.Data
         Interact
     }
 
+    /// <summary>Where a creature lives, which decides how it moves and where it may be placed.</summary>
+    public enum Habitat
+    {
+        /// <summary>Walks on the NavMesh (humans, cats, dogs).</summary>
+        Ground,
+        /// <summary>Swims inside a WaterArea (fish); can only be placed in water.</summary>
+        Water
+    }
+
     /// <summary>One entry in a creature's "what do I do next?" table.</summary>
     [Serializable]
     public class BehaviourWeight
@@ -67,16 +76,20 @@ namespace LivingDiorama.Data
         [Tooltip("How far (metres) a single wander can go from the current position.")]
         [SerializeField, Min(0.5f)] private float wanderRadius = 5f;
         [SerializeField, Min(0.05f)] private float agentRadius = 0.25f;
+        [SerializeField] private Habitat habitat = Habitat.Ground;
         [SerializeField] private SpriteAnimationSet animations;
         [SerializeField] private List<BehaviourWeight> behaviours = new();
 
         public float MoveSpeed => moveSpeed;
         public float WanderRadius => wanderRadius;
         public float AgentRadius => agentRadius;
+        public Habitat Habitat => habitat;
         public SpriteAnimationSet Animations => animations;
         public IReadOnlyList<BehaviourWeight> Behaviours => behaviours;
 
         public void SetAnimations(SpriteAnimationSet animationSet) => animations = animationSet;
+
+        public void SetHabitat(Habitat newHabitat) => habitat = newHabitat;
 
         /// <summary>
         /// Adds a default behaviour to an existing definition unless an equivalent entry is already

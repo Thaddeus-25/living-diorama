@@ -12,7 +12,7 @@ namespace LivingDiorama.Entities
     /// dragged freely) when the simulation is paused or while it is held, e.g. selected in the editor.
     /// </summary>
     [RequireComponent(typeof(PlacedObject), typeof(NavMeshAgent))]
-    public class LivingEntity : MonoBehaviour, IPlacementAware
+    public class LivingEntity : MonoBehaviour, IPlacementAware, IHoldable
     {
         [SerializeField] private SpriteAnimator animator;
         [Tooltip("When the simulation starts, how far (metres) to search for walkable ground.")]

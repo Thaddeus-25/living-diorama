@@ -93,12 +93,12 @@ namespace LivingDiorama.Tests
             Assert.AreEqual(heldAt, cat.transform.position, "A held creature stays put");
 
             // Dragging it somewhere new, then letting go: it lives on from there.
-            world.Move(cat.Placed, new Vector3(-6f, 0f, -4f));
+            world.Move(cat.Placed, new Vector3(5f, 0f, -4f));
             editor.Select(null);
             yield return null;
             Assert.IsFalse(cat.IsHeld);
             Assert.IsTrue(cat.IsSimulating);
-            Assert.Less(Vector3.Distance(cat.transform.position, new Vector3(-6f, 0f, -4f)), 0.3f);
+            Assert.Less(Vector3.Distance(cat.transform.position, new Vector3(5f, 0f, -4f)), 0.3f);
         }
 
         [UnityTest]
@@ -121,7 +121,7 @@ namespace LivingDiorama.Tests
         public IEnumerator PlacingACreatureWhileLiving_StartsWhereItWasPlaced()
         {
             var editor = Object.FindAnyObjectByType<LivingDiorama.SceneEditing.SceneEditorController>();
-            var spot = new Vector3(-7f, 0f, -4.5f);
+            var spot = new Vector3(5.5f, 0f, -4.6f);
             var placed = editor.PlaceAt(world.Database.Find("cat"), spot).GetComponent<LivingEntity>();
             editor.Select(null);
             yield return null;

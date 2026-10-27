@@ -54,6 +54,10 @@ namespace LivingDiorama.EditorTools
             ("human", new Vector3(-1.5f, 0f, -0.8f)),
             ("cat", new Vector3(2.2f, 0f, 0.6f)),
             ("dog", new Vector3(6.4f, 0f, -1.0f)),
+            ("pond", new Vector3(-7.0f, 0f, -4.5f)),
+            ("fish", new Vector3(-7.6f, 0f, -4.6f)),
+            ("fish", new Vector3(-6.4f, 0f, -4.2f)),
+            ("fish", new Vector3(-7.1f, 0f, -4.9f)),
         };
 
         public static void Build(Dictionary<string, string> art)

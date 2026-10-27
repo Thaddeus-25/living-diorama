@@ -106,6 +106,40 @@ namespace LivingDiorama.EditorTools
             shadow.transform.localScale = Vector3.one * (width * 1.3f / 2f);
         }
 
+        /// <summary>
+        /// Fish layout: a flat sprite lying on the water (turned to face the swimming direction),
+        /// a FishSwimmer brain and an animator. No NavMeshAgent: fish steer themselves in a WaterArea.
+        /// </summary>
+        public static GameObject BuildFish(EntityDefinition definition, Sprite firstFrame, Material material, string path)
+        {
+            var root = new GameObject(definition.DisplayName);
+            var visual = CreateSpriteVisual(root.transform, firstFrame, material, castShadows: false);
+            Object.DestroyImmediate(visual.GetComponent<Billboard>());
+            visual.transform.localPosition = new Vector3(0f, 0.03f, 0f); // just above the water surface
+            visual.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            visual.Tint = new Color(0.85f, 0.92f, 1f); // a touch of blue, as if just under the surface
+            var animator = visual.gameObject.AddComponent<SpriteAnimator>();
+            animator.Configure(visual, definition.Animations);
+
+            var placed = root.AddComponent<PlacedObject>();
+            placed.Configure(definition, visual);
+            root.AddComponent<LivingDiorama.Entities.FishSwimmer>().Configure(animator, visual.transform);
+
+            root.transform.localScale = Vector3.one * definition.DefaultScale;
+            var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
+            Object.DestroyImmediate(root);
+            return prefab;
+        }
+
+        /// <summary>Turns a prop's sprite into a flat surface on the ground (ponds, rugs...).</summary>
+        public static void LayFlat(SpriteVisual visual, float height = 0.01f)
+        {
+            Object.DestroyImmediate(visual.GetComponent<Billboard>());
+            visual.transform.localPosition = new Vector3(0f, height, 0f);
+            visual.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            visual.Renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+
         public static SpriteVisual CreateSpriteVisual(Transform parent, Sprite sprite, Material material, bool castShadows)
         {
             var visualObject = new GameObject("Visual", typeof(MeshFilter), typeof(MeshRenderer), typeof(BoxCollider));

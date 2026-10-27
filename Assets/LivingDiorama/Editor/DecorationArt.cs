@@ -12,6 +12,18 @@ namespace LivingDiorama.EditorTools
         /// <summary>The campfire's flame animation.</summary>
         public static readonly CreatureArt.ClipSpec[] CampfireClips = { new("idle", 3, 8f) };
 
+        /// <summary>The pond's water shimmer.</summary>
+        public static readonly CreatureArt.ClipSpec[] PondClips = { new("idle", 3, 2.5f) };
+
+        /// <summary>Fish seen from above: a slow tail sway when hovering, a quick one when swimming.</summary>
+        public static readonly CreatureArt.ClipSpec[] FishClips = { new("idle", 2, 2f), new("swim", 2, 7f) };
+
+        /// <summary>Pond size in metres (the art is 64 x 40 px at 16 px per metre).</summary>
+        public static readonly Vector2 PondSize = new(4f, 2.5f);
+
+        /// <summary>The open water inside the stone rim, as ellipse radii in metres (x = across, y = depth).</summary>
+        public static readonly Vector2 PondWaterRadii = new(1.75f, 1.0f);
+
         public static IEnumerable<ArtSpec> Specs()
         {
             yield return new ArtSpec("Bush", ArtKind.Sprite, PaintBush);
@@ -27,6 +39,69 @@ namespace LivingDiorama.EditorTools
                 int f = frame;
                 yield return new ArtSpec(CreatureArt.FrameName("Campfire", "idle", f), ArtKind.Sprite, () => PaintCampfire(f));
             }
+            for (int frame = 0; frame < PondClips[0].Frames; frame++)
+            {
+                int f = frame;
+                yield return new ArtSpec(CreatureArt.FrameName("Pond", "idle", f), ArtKind.CenteredSprite, () => PaintPond(f));
+            }
+            foreach (var clip in FishClips)
+                for (int frame = 0; frame < clip.Frames; frame++)
+                {
+                    int f = frame;
+                    yield return new ArtSpec(CreatureArt.FrameName("Fish", clip.Name, f), ArtKind.CenteredSprite, () => PaintFish(f));
+                }
+        }
+
+        /// <summary>Seen from above (it lies flat): stone rim, water with a deeper middle, lily pads and moving glints.</summary>
+        private static PixelCanvas PaintPond(int frame)
+        {
+            var random = new Random(31);
+            var canvas = new PixelCanvas(64, 40);
+            var stone = Hex("#8c8f99");
+            canvas.FillEllipse(32, 20, 31.5f, 19.5f, stone);
+            canvas.Speckle(stone, Hex("#767983"), 0.25f, random);
+            canvas.Speckle(stone, Hex("#a6a9b2"), 0.15f, random);
+
+            var water = Hex("#4a90c8");
+            canvas.FillEllipse(32, 20, 28f, 16.5f, water);
+            canvas.FillEllipse(32, 21, 20f, 11f, Hex("#3f7fb6"));
+            canvas.FillEllipse(32, 21.5f, 11f, 6f, Hex("#386fa3"));
+
+            // Lily pads (with their notch) stay put.
+            var pad = Hex("#4f9a46");
+            foreach (var (x, y, r) in new[] { (14f, 26f, 3f), (47f, 13f, 2.6f), (50f, 27f, 2.2f) })
+            {
+                canvas.FillEllipse(x, y, r, r * 0.8f, pad);
+                canvas.Set(Mathf.RoundToInt(x + r * 0.5f), Mathf.RoundToInt(y), Hex("#386fa3"));
+            }
+            canvas.Set(15, 27, Hex("#f08fb8")); // a flower on the big pad
+
+            // Glints drift a little each frame.
+            var glint = Hex("#d6ecfb");
+            foreach (var (x, y) in new[] { (22, 14), (38, 26), (30, 9), (44, 19), (19, 21) })
+            {
+                int gx = x + frame * 2 - 2;
+                canvas.FillRect(gx, y, 3, 1, glint);
+            }
+            canvas.Outline(Hex("#3b3d44"));
+            return canvas;
+        }
+
+        /// <summary>A koi seen from above, facing right. The two frames swing the tail.</summary>
+        private static PixelCanvas PaintFish(int frame)
+        {
+            var canvas = new PixelCanvas(12, 7);
+            var body = Hex("#f08a3c");
+            canvas.FillEllipse(7f, 3.5f, 4.2f, 1.8f, body);
+            int tailY = frame == 0 ? 4 : 2;
+            canvas.FillRect(1, tailY - 1, 2, 3, body);
+            canvas.Set(0, tailY - 1, body);
+            canvas.Set(0, tailY + 1, body);
+            canvas.FillRect(5, 3, 2, 2, Hex("#f5f0e6"));  // white patch
+            canvas.Set(9, 3, Hex("#f5f0e6"));
+            canvas.Set(10, 4, Hex("#2a1d16"));            // eye
+            canvas.Outline(Hex("#7a3a1a"));
+            return canvas;
         }
 
         private static Color32 Hex(string hex) => PixelCanvas.Hex(hex);

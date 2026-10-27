@@ -28,6 +28,26 @@ Pixel-art sprites stand in a lit 3D world, viewed through a fixed, angled orthog
 "Depth" in the properties panel is the object's distance from the front edge (world Z). Since
 the world is 3D, depth alone decides what's drawn in front.
 
+## What you can place
+| Tab | Objects |
+|---|---|
+| Environment | Pond (flat water; fish live in it, creatures walk around it) |
+| Nature | Tree, Rock, Bush, Flowers, Mushrooms |
+| Structures | Bench, Fence, Streetlight, Sign |
+| Decorations | Lantern, Campfire |
+| Living | Human, Cat, Dog, Fish |
+
+- Flowers, mushrooms and the lantern don't block walking; everything else does.
+- The streetlight, lantern and campfire light up at dusk.
+- Humans sit on benches and warm up at campfires. Cats and dogs nap by trees and campfires.
+- Fish can only be placed in water (the preview turns red elsewhere). Moving a pond carries
+  its fish along, and a fish dragged onto land slips back into the nearest pond when you let go.
+
+## Day and night
+The clock in the top bar shows the time of day. Drag the slider to set it, or tick
+**Time passes** to let the day go by on its own (a full day takes 4 minutes). The time is saved
+with the scene. Version-1 saves open at 10:00.
+
 ## Look and feel
 - **Tilt-shift blur.** The sky and hills soften towards the top of the screen and the garden stays
   sharp, like a photo of a miniature. URP's depth of field assumes a perspective camera, so this

@@ -96,6 +96,7 @@ namespace LivingDiorama.UI
             editor.IsTextInputFocused = IsTextInputFocused;
             editor.Commands.Changed += RefreshHistoryButtons;
             editor.ToolStateChanged += RefreshToolState;
+            editor.PlacementRejected += OnPlacementRejected;
             modes.ModeChanged += OnModeChanged;
             modes.CreaturePauseChanged += OnCreaturePauseChanged;
             OnCreaturePauseChanged(modes.CreaturesPausedInEdit);
@@ -111,6 +112,7 @@ namespace LivingDiorama.UI
             {
                 editor.Commands.Changed -= RefreshHistoryButtons;
                 editor.ToolStateChanged -= RefreshToolState;
+                editor.PlacementRejected -= OnPlacementRejected;
                 editor.IsPointerOverUi = null;
                 editor.IsTextInputFocused = null;
                 if (undoButton != null) undoButton.clicked -= editor.Undo;
@@ -217,6 +219,8 @@ namespace LivingDiorama.UI
 
         private void OnGridToggled(ChangeEvent<bool> change) => editor.SetGridSnap(change.newValue);
 
+        private void OnPlacementRejected(string reason) => toast.Show(reason, isError: true);
+
         private void RefreshTime()
         {
             timeLabel.text = dayNight.FormattedTime;
@@ -240,8 +244,10 @@ namespace LivingDiorama.UI
         {
             gridToggle.SetValueWithoutNotify(editor.GridSnapEnabled);
             var placing = editor.PlacingDefinition;
+            bool needsWater = placing is LivingDiorama.Data.EntityDefinition { Habitat: LivingDiorama.Data.Habitat.Water };
+            string where = needsWater ? " in a pond" : string.Empty;
             hintBar.text = placing != null
-                ? $"Click to place {placing.DisplayName}  ·  Hold Shift to place several  ·  Right-click or Esc to stop"
+                ? $"Click{where} to place {placing.DisplayName}  ·  Hold Shift to place several  ·  Right-click or Esc to stop"
                 : EditHint;
             library.SetActiveItem(placing);
         }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using LivingDiorama.Data;
+using LivingDiorama.World;
 using UnityEditor;
 using UnityEngine;
 
@@ -44,6 +45,7 @@ namespace LivingDiorama.EditorTools
             new("sign", "Sign", ObjectCategory.Structures, "Sign", true, new Vector2(0.9f, 0.3f)),
             new("lantern", "Lantern", ObjectCategory.Decorations, "Lantern", false, new Vector2(0.5f, 0.4f)),
             new("campfire", "Campfire", ObjectCategory.Decorations, CreatureArt.FrameName("Campfire", "idle", 0), true, new Vector2(1.0f, 1.0f)),
+            new("pond", "Pond", ObjectCategory.Environment, CreatureArt.FrameName("Pond", "idle", 0), true, new Vector2(3.9f, 2.4f), rotation: false),
         };
 
         /// <summary>
@@ -133,6 +135,13 @@ namespace LivingDiorama.EditorTools
                     new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(8f, 16f), "sleep"),
                     BehaviourWeight.Interact(InteractionType.Sleep, 1f, new Vector2(10f, 18f)),
                 }),
+            // Fish swim in ponds: Wander = swim somewhere, Idle = hover.
+            new("fish", "Fish", DecorationArt.FishClips, new Vector2(0.6f, 0.4f),
+                moveSpeed: 0.7f, wanderRadius: 2f, agentRadius: 0.1f, new[]
+                {
+                    new BehaviourWeight(EntityBehaviour.Idle, 2f, new Vector2(1.5f, 4f)),
+                    new BehaviourWeight(EntityBehaviour.Wander, 5f, new Vector2(3f, 8f)),
+                }, Habitat.Water),
         };
 
         [MenuItem("Living Diorama/Rebuild Generated Assets")]
@@ -162,8 +171,11 @@ namespace LivingDiorama.EditorTools
                 var animations = BuildAnimationSet(spec.DisplayName, spec.Clips, art);
                 var definition = LoadOrCreateEntityDefinition(spec, animations);
                 var firstFrame = animations.Find(SpriteAnimationSet.Idle).frames[0];
-                var prefab = PrefabBuilder.BuildEntity(definition, firstFrame, materials.SpriteLit,
-                    LoadSprite(art["ContactShadow"]), materials.ContactShadow, $"{PrefabsFolder}/{spec.DisplayName}.prefab");
+                string prefabPath = $"{PrefabsFolder}/{spec.DisplayName}.prefab";
+                var prefab = spec.Habitat == Habitat.Water
+                    ? PrefabBuilder.BuildFish(definition, firstFrame, materials.SpriteLit, prefabPath)
+                    : PrefabBuilder.BuildEntity(definition, firstFrame, materials.SpriteLit,
+                        LoadSprite(art["ContactShadow"]), materials.ContactShadow, prefabPath);
                 definition.SetPrefab(prefab);
                 EditorUtility.SetDirty(definition);
                 definitions.Add(definition);
@@ -210,7 +222,7 @@ namespace LivingDiorama.EditorTools
             if (definition != null) return definition;
 
             definition = ScriptableObject.CreateInstance<ObjectDefinition>();
-            definition.Configure(spec.Id, spec.DisplayName, spec.Category, sprite, spec.IsObstacle, spec.Footprint);
+            definition.Configure(spec.Id, spec.DisplayName, spec.Category, sprite, spec.IsObstacle, spec.Footprint, spec.AllowRotation);
             AssetDatabase.CreateAsset(definition, path);
             return definition;
         }
@@ -227,6 +239,14 @@ namespace LivingDiorama.EditorTools
                     return (_, visual) => PropDecorations.AddLamp(visual, height: 2.6f, range: 5f, nightIntensity: 2f);
                 case "lantern":
                     return (_, visual) => PropDecorations.AddLamp(visual, height: 0.7f, range: 3f, nightIntensity: 1.2f);
+                case "pond":
+                    var shimmer = BuildAnimationSet("Pond", DecorationArt.PondClips, art);
+                    return (root, visual) =>
+                    {
+                        PrefabBuilder.LayFlat(visual);
+                        visual.gameObject.AddComponent<SpriteAnimator>().Configure(visual, shimmer);
+                        root.AddComponent<WaterArea>().Configure(DecorationArt.PondWaterRadii);
+                    };
                 case "campfire":
                     var flames = BuildAnimationSet("Campfire", DecorationArt.CampfireClips, art);
                     return (_, visual) => PropDecorations.AddCampfire(visual, flames, materials.Ember);
@@ -260,6 +280,7 @@ namespace LivingDiorama.EditorTools
             if (definition != null)
             {
                 definition.SetAnimations(animations);
+                definition.SetHabitat(spec.Habitat);
                 // Roll out new default behaviours (e.g. Interact) without touching tuned entries.
                 foreach (var entry in spec.Behaviours)
                     if (definition.AddBehaviourIfMissing(entry))
@@ -272,6 +293,7 @@ namespace LivingDiorama.EditorTools
             definition.Configure(spec.Id, spec.DisplayName, ObjectCategory.LivingThings, icon,
                 obstacle: false, spec.Footprint, rotation: false);
             definition.ConfigureEntity(spec.MoveSpeed, spec.WanderRadius, spec.AgentRadius, animations, spec.Behaviours);
+            definition.SetHabitat(spec.Habitat);
             AssetDatabase.CreateAsset(definition, path);
             return definition;
         }
@@ -321,9 +343,12 @@ namespace LivingDiorama.EditorTools
             public readonly string ArtName;
             public readonly bool IsObstacle;
             public readonly Vector2 Footprint;
+            public readonly bool AllowRotation;
 
-            public PropSpec(string id, string displayName, ObjectCategory category, string artName, bool isObstacle, Vector2 footprint)
+            public PropSpec(string id, string displayName, ObjectCategory category, string artName, bool isObstacle,
+                Vector2 footprint, bool rotation = true)
             {
+                AllowRotation = rotation;
                 Id = id;
                 DisplayName = displayName;
                 Category = category;
@@ -344,10 +369,13 @@ namespace LivingDiorama.EditorTools
         public readonly float WanderRadius;
         public readonly float AgentRadius;
         public readonly BehaviourWeight[] Behaviours;
+        public readonly Habitat Habitat;
 
         public EntitySpec(string id, string displayName, CreatureArt.ClipSpec[] clips, Vector2 footprint,
-            float moveSpeed, float wanderRadius, float agentRadius, BehaviourWeight[] behaviours)
+            float moveSpeed, float wanderRadius, float agentRadius, BehaviourWeight[] behaviours,
+            Habitat habitat = Habitat.Ground)
         {
+            Habitat = habitat;
             Id = id;
             DisplayName = displayName;
             Clips = clips;
