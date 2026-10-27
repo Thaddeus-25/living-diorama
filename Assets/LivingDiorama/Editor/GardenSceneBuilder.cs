@@ -54,6 +54,7 @@ namespace LivingDiorama.EditorTools
             var cameraComponent = CreateCamera(materials);
             CreateSun();
             ConfigureAmbientLight();
+            CreateAtmosphere();
             var environment = CreateGround(materials);
             BakeNavMesh(environment);
             CreateBackdrop(art, materials, cameraComponent.GetComponent<DioramaCamera>());
@@ -110,6 +111,17 @@ namespace LivingDiorama.EditorTools
             sun.intensity = 1.3f;
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = 0.65f;
+        }
+
+        /// <summary>Global post-processing volume (bloom, vignette, colour grading).</summary>
+        private static void CreateAtmosphere()
+        {
+            var atmosphere = new GameObject("Atmosphere");
+            var volume = atmosphere.AddComponent<Volume>();
+            volume.isGlobal = true;
+            volume.priority = 1f;
+            volume.sharedProfile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(AtmosphereBuilder.ProfilePath)
+                                   ?? throw new System.IO.FileNotFoundException(AtmosphereBuilder.ProfilePath);
         }
 
         private static void ConfigureAmbientLight()

@@ -130,6 +130,9 @@ namespace LivingDiorama.EditorTools
             EditorUtility.SetDirty(database);
             AssetDatabase.SaveAssets();
 
+            AtmosphereBuilder.InstallTiltShift();
+            AtmosphereBuilder.CreateProfile();
+
             // Opening a new scene unloads assets that only C# variables reference, so the scene
             // builder reloads what it needs from disk instead of reusing these objects.
             GardenSceneBuilder.Build(art);

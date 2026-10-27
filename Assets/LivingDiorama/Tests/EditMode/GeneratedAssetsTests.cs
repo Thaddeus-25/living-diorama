@@ -55,6 +55,29 @@ namespace LivingDiorama.Tests
             Assert.AreEqual(0f, sprite.bounds.min.y, 0.001f);
         }
 
+        [TestCase("Assets/LivingDiorama/Settings/PC_Renderer.asset")]
+        [TestCase("Assets/LivingDiorama/Settings/Mobile_Renderer.asset")]
+        public void Renderers_HaveTiltShiftWithMaterial(string path)
+        {
+            var renderer = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.ScriptableRendererData>(path);
+            Assert.IsNotNull(renderer, path);
+            var tiltShift = renderer.rendererFeatures.Find(f => f is LivingDiorama.Rendering.TiltShiftFeature) as LivingDiorama.Rendering.TiltShiftFeature;
+            Assert.IsNotNull(tiltShift, "Tilt-shift pass missing");
+            Assert.IsNotNull(tiltShift.Configuration.material);
+            Assert.AreEqual(1, renderer.rendererFeatures.FindAll(f => f is LivingDiorama.Rendering.TiltShiftFeature).Count,
+                "Re-running the bootstrap must not add duplicates");
+        }
+
+        [Test]
+        public void AtmosphereProfile_HasBloomVignetteAndColour()
+        {
+            var profile = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>(AtmosphereBuilder.ProfilePath);
+            Assert.IsNotNull(profile);
+            Assert.IsTrue(profile.Has<UnityEngine.Rendering.Universal.Bloom>());
+            Assert.IsTrue(profile.Has<UnityEngine.Rendering.Universal.Vignette>());
+            Assert.IsTrue(profile.Has<UnityEngine.Rendering.Universal.ColorAdjustments>());
+        }
+
         [Test]
         public void SpriteMeshCache_FacesCameraAndMatchesSpriteBounds()
         {
