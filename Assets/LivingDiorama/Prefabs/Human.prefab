@@ -208,6 +208,7 @@ GameObject:
   - component: {fileID: 5244689202887804582}
   - component: {fileID: 8425159113066705785}
   - component: {fileID: 2428292378051687659}
+  - component: {fileID: 985311337109694513}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -348,3 +349,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.World.SpriteAnimator
   visual: {fileID: 5244689202887804582}
   animations: {fileID: 11400000, guid: ca67efded811aeb4f94bba1a6d9ebacd, type: 2}
+--- !u!114 &985311337109694513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6275796414545543408}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474ee29a227c96041955b3e341e0f029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.Entities.WalkBob
+  bobPixels: 1

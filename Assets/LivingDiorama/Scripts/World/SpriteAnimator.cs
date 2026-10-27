@@ -14,6 +14,9 @@ namespace LivingDiorama.World
 
         public string CurrentClipName { get; private set; }
 
+        /// <summary>Index of the frame being shown in the current clip.</summary>
+        public int CurrentFrame { get; private set; }
+
         public void Configure(SpriteVisual targetVisual, SpriteAnimationSet animationSet)
         {
             visual = targetVisual;
@@ -46,6 +49,7 @@ namespace LivingDiorama.World
         {
             if (currentClip == null || visual == null) return;
             int frame = SpriteAnimationSet.FrameAt(clipTime, currentClip.framesPerSecond, currentClip.frames.Length, currentClip.loop);
+            CurrentFrame = frame;
             visual.Sprite = currentClip.frames[frame];
         }
     }

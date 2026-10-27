@@ -154,7 +154,7 @@ namespace LivingDiorama.Entities
             {
                 case Phase.SlideIn:
                     if (!pointGone) spot = point.Position;
-                    entity.transform.position = Vector3.Lerp(slideFrom, spot, phaseTime / SlideSeconds);
+                    entity.transform.position = Vector3.Lerp(slideFrom, spot, Ease(phaseTime / SlideSeconds));
                     if (phaseTime >= SlideSeconds)
                     {
                         BeginPhase(Phase.Hold, spot);
@@ -173,7 +173,7 @@ namespace LivingDiorama.Entities
                     break;
 
                 case Phase.SlideOut:
-                    entity.transform.position = Vector3.Lerp(slideFrom, approach, phaseTime / SlideSeconds);
+                    entity.transform.position = Vector3.Lerp(slideFrom, approach, Ease(phaseTime / SlideSeconds));
                     if (phaseTime >= SlideSeconds) IsFinished = true;
                     break;
             }
@@ -190,6 +190,9 @@ namespace LivingDiorama.Entities
             if (agent.enabled && agent.isOnNavMesh) agent.Warp(approach);
             agent.updatePosition = true;
         }
+
+        /// <summary>Ease-in-out so stepping onto and off the seat starts and ends gently.</summary>
+        public static float Ease(float t) => Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
 
         private void BeginPhase(Phase next, Vector3 from)
         {

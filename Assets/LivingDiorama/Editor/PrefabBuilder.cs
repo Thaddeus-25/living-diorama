@@ -67,6 +67,7 @@ namespace LivingDiorama.EditorTools
             CreateContactShadow(root.transform, shadowSprite, shadowMaterial, definition.Footprint.x);
             var animator = visual.gameObject.AddComponent<SpriteAnimator>();
             animator.Configure(visual, definition.Animations);
+            visual.gameObject.AddComponent<LivingDiorama.Entities.WalkBob>();
 
             var placed = root.AddComponent<PlacedObject>();
             placed.Configure(definition, visual);
