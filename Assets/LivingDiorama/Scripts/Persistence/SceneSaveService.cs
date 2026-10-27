@@ -18,6 +18,7 @@ namespace LivingDiorama.Persistence
         [SerializeField] private DioramaWorld world;
         [SerializeField] private DioramaCamera dioramaCamera;
         [SerializeField] private SceneEditorController editor;
+        [SerializeField] private DayNightCycle dayNight;
 
         private SaveFileStore store;
 
@@ -66,7 +67,9 @@ namespace LivingDiorama.Persistence
                 savedAtUtc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
                 environment = new EnvironmentData
                 {
-                    cameraZoom = dioramaCamera != null ? dioramaCamera.TargetSize : 0f
+                    cameraZoom = dioramaCamera != null ? dioramaCamera.TargetSize : 0f,
+                    timeOfDay = dayNight != null ? dayNight.TimeOfDay : EnvironmentData.DefaultTimeOfDay,
+                    timeAdvances = dayNight == null || dayNight.AutoAdvance
                 }
             };
             foreach (var placed in world.Objects)
@@ -150,6 +153,12 @@ namespace LivingDiorama.Persistence
 
             if (dioramaCamera != null && data.environment != null && data.environment.cameraZoom > 0f)
                 dioramaCamera.SetZoom(data.environment.cameraZoom, instant: true);
+
+            if (dayNight != null && data.environment != null)
+            {
+                dayNight.SetAutoAdvance(data.environment.timeAdvances);
+                dayNight.SetTime(data.environment.timeOfDay);
+            }
         }
 
         private void MarkDirty()

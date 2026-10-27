@@ -47,7 +47,7 @@ namespace LivingDiorama.Tests
         public void Json_IsReadableAndVersioned()
         {
             var json = SceneSerializer.ToJson(Sample());
-            StringAssert.Contains("\"version\": 1", json);
+            StringAssert.Contains($"\"version\": {SceneSerializer.CurrentVersion}", json);
             StringAssert.Contains("\"definitionId\": \"tree\"", json);
         }
 
@@ -62,6 +62,28 @@ namespace LivingDiorama.Tests
             var result = SceneSerializer.FromJson(json);
             Assert.IsFalse(result.Success);
             Assert.IsNotEmpty(result.Error);
+        }
+
+        [Test]
+        public void Version1File_IsUpgradedToMorningWithTimeRunning()
+        {
+            var result = SceneSerializer.FromJson("{ \"version\": 1, \"environment\": { \"cameraZoom\": 5 }, \"objects\": [] }");
+            Assert.IsTrue(result.Success, result.Error);
+            Assert.AreEqual(SceneSerializer.CurrentVersion, result.Data.version);
+            Assert.AreEqual(EnvironmentData.DefaultTimeOfDay, result.Data.environment.timeOfDay);
+            Assert.IsTrue(result.Data.environment.timeAdvances);
+            Assert.AreEqual(5f, result.Data.environment.cameraZoom, "Existing settings survive the upgrade");
+        }
+
+        [Test]
+        public void TimeOfDay_RoundTrips()
+        {
+            var data = Sample();
+            data.environment.timeOfDay = 22.5f;
+            data.environment.timeAdvances = false;
+            var result = SceneSerializer.FromJson(SceneSerializer.ToJson(data));
+            Assert.AreEqual(22.5f, result.Data.environment.timeOfDay);
+            Assert.IsFalse(result.Data.environment.timeAdvances);
         }
 
         [Test]

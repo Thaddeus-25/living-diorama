@@ -29,5 +29,11 @@ namespace LivingDiorama.Persistence
         public string environmentId = DefaultEnvironmentId;
         /// <summary>Camera orthographic size (zoom). 0 or less means "keep the current zoom".</summary>
         public float cameraZoom;
+        /// <summary>Hours, 0 to 24. Added in format 2.</summary>
+        public float timeOfDay = DefaultTimeOfDay;
+        /// <summary>Whether time passes on its own. Added in format 2.</summary>
+        public bool timeAdvances = true;
+
+        public const float DefaultTimeOfDay = 10f;
     }
 }

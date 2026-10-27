@@ -45,10 +45,11 @@ namespace LivingDiorama.EditorTools
             return Save(material, path);
         }
 
-        /// <summary>Alpha-blended unlit particle material (tinted per particle by vertex colour).</summary>
-        public static Material CreateParticleUnlit(string path, Texture texture)
+        /// <summary>Alpha-blended, lit particle material (tinted per particle by vertex colour).</summary>
+        public static Material CreateParticleLit(string path, Texture texture)
         {
-            var material = new Material(FindShader("Universal Render Pipeline/Particles/Unlit")) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
+            // Simple Lit, so particles (e.g. leaves) darken at night with the rest of the scene.
+            var material = new Material(FindShader("Universal Render Pipeline/Particles/Simple Lit")) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
             material.SetTexture("_BaseMap", texture);
             material.SetFloat("_Surface", 1f);
             material.SetFloat("_Blend", 0f);

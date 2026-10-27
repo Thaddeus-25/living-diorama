@@ -26,7 +26,7 @@ namespace LivingDiorama.Persistence
     public static class SceneSerializer
     {
         /// <summary>Format version written by this build.</summary>
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
 
         public static string ToJson(SceneSaveData data)
         {
@@ -105,8 +105,14 @@ namespace LivingDiorama.Persistence
     {
         private static readonly Dictionary<int, Action<SceneSaveData, List<string>>> Steps = new()
         {
-            // Example for the future:
-            // [1] = (data, warnings) => { /* turn a version-1 file into version 2 */ },
+            // Format 2 added the day/night cycle. Version-1 scenes start at mid-morning with time running
+            // (set explicitly, since fields missing from old files can't be relied on to keep their defaults).
+            [1] = (data, _) =>
+            {
+                data.environment ??= new EnvironmentData();
+                data.environment.timeOfDay = EnvironmentData.DefaultTimeOfDay;
+                data.environment.timeAdvances = true;
+            },
         };
 
         public static void Upgrade(SceneSaveData data, List<string> warnings)

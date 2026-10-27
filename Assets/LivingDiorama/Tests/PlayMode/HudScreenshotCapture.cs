@@ -132,6 +132,31 @@ namespace LivingDiorama.Tests
             Debug.Log($"[HudScreenshot] human={human.CurrentState?.Name} cat={cat.CurrentState?.Name}");
         }
 
+        /// <summary>The garden at four times of day, saved to Verification/daynight-HH.png.</summary>
+        [UnityTest]
+        public IEnumerator CaptureTimesOfDay()
+        {
+            yield return SceneManager.LoadSceneAsync("Garden", LoadSceneMode.Single);
+            yield return null;
+            var cycle = Object.FindAnyObjectByType<LivingDiorama.World.DayNightCycle>();
+            cycle.SetAutoAdvance(false);
+            Object.FindAnyObjectByType<LivingDiorama.UI.EditorHud>().GetComponent<UIDocument>().rootVisualElement.style.display = DisplayStyle.None;
+
+            foreach (float hour in new[] { 6.5f, 12f, 17.6f, 22f })
+            {
+                cycle.SetTime(hour);
+                for (int i = 0; i < 3; i++) yield return null;
+                var cam = Camera.main;
+                var target = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+                cam.targetTexture = target;
+                cam.Render();
+                cam.targetTexture = null;
+                string folder = Path.Combine(Directory.GetCurrentDirectory(), "Verification");
+                Directory.CreateDirectory(folder);
+                File.WriteAllBytes(Path.Combine(folder, $"daynight-{hour:00}.png"), Read(target).EncodeToPNG());
+            }
+        }
+
         private static Texture2D Read(RenderTexture source)
         {
             var previous = RenderTexture.active;

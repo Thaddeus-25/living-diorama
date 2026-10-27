@@ -1,6 +1,7 @@
 using LivingDiorama.Core;
 using LivingDiorama.Persistence;
 using LivingDiorama.SceneEditing;
+using LivingDiorama.World;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -21,6 +22,7 @@ namespace LivingDiorama.UI
         [SerializeField] private AppModeController modes;
         [SerializeField] private DioramaCamera dioramaCamera;
         [SerializeField] private SceneSaveService saveService;
+        [SerializeField] private DayNightCycle dayNight;
         [Tooltip("Seconds the 'Press Tab to edit' hint stays visible after entering Preview.")]
         [SerializeField] private float previewHintSeconds = 3f;
 
@@ -36,6 +38,9 @@ namespace LivingDiorama.UI
         private Button redoButton;
         private Toggle gridToggle;
         private Toggle pauseToggle;
+        private Label timeLabel;
+        private Slider timeSlider;
+        private Toggle timeAuto;
         private ObjectLibraryPanel library;
         private PropertiesPanel properties;
         private DialogPanel dialog;
@@ -58,12 +63,27 @@ namespace LivingDiorama.UI
             redoButton = root.Q<Button>("redo-button");
             gridToggle = root.Q<Toggle>("grid-toggle");
             pauseToggle = root.Q<Toggle>("pause-toggle");
+            timeLabel = root.Q<Label>("time-label");
+            timeSlider = root.Q<Slider>("time-slider");
+            timeAuto = root.Q<Toggle>("time-auto");
 
             undoButton.clicked += editor.Undo;
             redoButton.clicked += editor.Redo;
             root.Q<Button>("preview-button").clicked += EnterPreview;
             gridToggle.RegisterValueChangedCallback(OnGridToggled);
             pauseToggle.RegisterValueChangedCallback(OnPauseToggled);
+            if (dayNight != null)
+            {
+                // Dragging the slider takes manual control of the time.
+                timeSlider.RegisterValueChangedCallback(e =>
+                {
+                    dayNight.SetAutoAdvance(false);
+                    dayNight.SetTime(e.newValue);
+                });
+                timeAuto.RegisterValueChangedCallback(e => dayNight.SetAutoAdvance(e.newValue));
+                dayNight.SettingsChanged += RefreshTime;
+                RefreshTime();
+            }
 
             library = new ObjectLibraryPanel(root.Q("library-panel"), editor);
             properties = new PropertiesPanel(root.Q("properties-panel"), editor);
@@ -96,6 +116,7 @@ namespace LivingDiorama.UI
                 if (undoButton != null) undoButton.clicked -= editor.Undo;
                 if (redoButton != null) redoButton.clicked -= editor.Redo;
             }
+            if (dayNight != null) dayNight.SettingsChanged -= RefreshTime;
             if (modes != null)
             {
                 modes.ModeChanged -= OnModeChanged;
@@ -121,6 +142,7 @@ namespace LivingDiorama.UI
 
             HandleFileShortcuts();
             toast.Tick();
+            if (dayNight != null && dayNight.AutoAdvance) RefreshTime();
 
             if (previewHint.resolvedStyle.opacity > 0f && Time.unscaledTime > previewHintHideTime)
                 previewHint.style.opacity = 0f;
@@ -194,6 +216,13 @@ namespace LivingDiorama.UI
         private void EnterPreview() => modes.SetMode(AppMode.Preview);
 
         private void OnGridToggled(ChangeEvent<bool> change) => editor.SetGridSnap(change.newValue);
+
+        private void RefreshTime()
+        {
+            timeLabel.text = dayNight.FormattedTime;
+            timeSlider.SetValueWithoutNotify(dayNight.TimeOfDay);
+            timeAuto.SetValueWithoutNotify(dayNight.AutoAdvance);
+        }
 
         private void OnPauseToggled(ChangeEvent<bool> change) => modes.SetCreaturesPausedInEdit(change.newValue);
 

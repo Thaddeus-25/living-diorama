@@ -152,7 +152,7 @@ namespace LivingDiorama.EditorTools
             {
                 SpriteLit = MaterialFactory.CreateSpriteLit($"{MaterialsFolder}/M_SpriteLit.mat"),
                 Backdrop = MaterialFactory.CreateBackdrop($"{MaterialsFolder}/M_Backdrop.mat"),
-                Leaf = MaterialFactory.CreateParticleUnlit($"{MaterialsFolder}/M_Leaf.mat", LoadTexture(art["Leaf"])),
+                Leaf = MaterialFactory.CreateParticleLit($"{MaterialsFolder}/M_Leaf.mat", LoadTexture(art["Leaf"])),
                 ContactShadow = MaterialFactory.CreateTransparentTint($"{MaterialsFolder}/M_ContactShadow.mat", new Color(0.06f, 0.1f, 0.04f, 0.6f)),
                 Sky = MaterialFactory.CreateUnlitTextured($"{MaterialsFolder}/M_Sky.mat", LoadTexture(art["SkyGradient"])),
                 Grass = MaterialFactory.CreateGround($"{MaterialsFolder}/M_Grass.mat", LoadTexture(art["GrassTile"]),

@@ -60,6 +60,7 @@ namespace LivingDiorama.EditorTools
             CreateBackdrop(art, materials, cameraComponent.GetComponent<DioramaCamera>());
             var world = CreateWorld(database);
             CreateEditor(world, cameraComponent, art, materials);
+            CreateDayNightCycle(cameraComponent);
 
             Billboard.AlignAll(cameraComponent);
 
@@ -253,6 +254,29 @@ namespace LivingDiorama.EditorTools
             eventSystemObject.AddComponent<EventSystem>();
             var inputModule = eventSystemObject.AddComponent<InputSystemUIInputModule>();
             inputModule.AssignDefaultActions();
+        }
+
+        /// <summary>
+        /// The day/night cycle drives the sun, sky, hills and camera background, and is used by the
+        /// save service (time is saved) and the HUD (time controls).
+        /// </summary>
+        private static void CreateDayNightCycle(Camera cam)
+        {
+            var cycleObject = new GameObject("DayNightCycle");
+            var cycle = cycleObject.AddComponent<DayNightCycle>();
+            Wire(cycle, "sun", Object.FindAnyObjectByType<Light>());
+            Wire(cycle, "sky", cam.transform.Find("Sky").GetComponent<Renderer>());
+            Wire(cycle, "worldCamera", cam);
+
+            var hills = GameObject.Find("Backdrop").GetComponentsInChildren<SpriteVisual>();
+            var serialized = new SerializedObject(cycle);
+            var backdrop = serialized.FindProperty("backdrop");
+            backdrop.arraySize = hills.Length;
+            for (int i = 0; i < hills.Length; i++) backdrop.GetArrayElementAtIndex(i).objectReferenceValue = hills[i];
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            Wire(Object.FindAnyObjectByType<SceneSaveService>(), "dayNight", cycle);
+            Wire(Object.FindAnyObjectByType<EditorHud>(), "dayNight", cycle);
         }
 
         private static SelectionIndicator CreateRing(Transform parent, string name, Sprite sprite, Material material,

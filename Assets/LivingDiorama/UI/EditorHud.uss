@@ -52,6 +52,18 @@
     background-color: rgba(255, 240, 210, 0.15);
 }
 
+.time-label {
+    color: rgb(250, 226, 170);
+    font-size: 13px;
+    min-width: 40px;
+    -unity-text-align: middle-right;
+}
+
+.time-slider {
+    width: 120px;
+    margin: 0 6px;
+}
+
 .tool-button {
     height: 30px;
     padding: 0 14px;
