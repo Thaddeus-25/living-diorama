@@ -37,7 +37,8 @@ namespace LivingDiorama.Tests
         [UnityTest]
         public IEnumerator EditMode_CreaturesKeepLivingByDefault()
         {
-            Assert.AreEqual(2, creatures.Count, "Garden should start with a human and a cat");
+            CollectionAssert.AreEquivalent(new[] { "human", "cat", "dog" }, creatures.Select(c => c.Definition.Id),
+                "Garden should start with a human, a cat and a dog");
             Assert.AreEqual(AppMode.Edit, modes.Mode);
             Assert.IsFalse(modes.CreaturesPausedInEdit);
             yield return null;
@@ -196,7 +197,10 @@ namespace LivingDiorama.Tests
             modes.SetMode(AppMode.Preview);
             yield return null;
             var rester = creatures.First(c => c.Definition.Id == resterId);
-            var walker = creatures.First(c => c != rester);
+            var walker = creatures.First(c => c != rester && c.Definition.Id != "dog");
+            // Everyone else naps where they are, so only the two creatures under test move.
+            foreach (var bystander in creatures.Where(c => c != rester && c != walker))
+                bystander.StartBehaviour(new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(60f, 60f), "sleep"));
 
             // Open ground in front of the bench, away from the rocks.
             var restSpot = new Vector3(0f, 0f, -4f);
@@ -221,6 +225,28 @@ namespace LivingDiorama.Tests
 
             Assert.Greater(walker.transform.position.x, 3f, "The walker should get past the resting creature");
             Assert.Less(maxPush, 0.05f, $"The resting {resterId} was pushed {maxPush:F2} m");
+        }
+
+        [UnityTest]
+        public IEnumerator Dog_IsLivelierThanTheCat()
+        {
+            var dog = creatures.First(c => c.Definition.Id == "dog");
+            var cat = creatures.First(c => c.Definition.Id == "cat");
+            Assert.Greater(dog.Definition.MoveSpeed, cat.Definition.MoveSpeed);
+            Assert.Greater(dog.Definition.WanderRadius, cat.Definition.WanderRadius);
+
+            modes.SetMode(AppMode.Preview);
+            yield return null;
+            Assert.IsTrue(dog.IsSimulating && dog.Agent.isOnNavMesh);
+            var start = dog.transform.position;
+            dog.StartBehaviour(new BehaviourWeight(EntityBehaviour.Wander, 1f, new Vector2(10f, 10f)));
+            float maxDistance = 0f;
+            for (float t = 0f; t < 3f; t += Time.deltaTime)
+            {
+                maxDistance = Mathf.Max(maxDistance, Vector3.Distance(start, dog.transform.position));
+                yield return null;
+            }
+            Assert.Greater(maxDistance, 0.5f, "The dog should have run somewhere");
         }
 
         /// <summary>True when <paramref name="point"/> is inside the obstacle's box, shrunk by a tolerance.</summary>

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c230d86c0935660409311d77540b963f, type: 3}
+  m_Name: DogAnimations
+  m_EditorClassIdentifier: LivingDiorama.Runtime::LivingDiorama.Data.SpriteAnimationSet
+  clips:
+  - name: idle
+    frames:
+    - {fileID: 21300000, guid: b324e1f49a7b1d645bcf69251a96b643, type: 3}
+    - {fileID: 21300000, guid: b8b482687e9dd234186051bed86bd5d0, type: 3}
+    framesPerSecond: 3
+    loop: 1
+  - name: walk
+    frames:
+    - {fileID: 21300000, guid: 1abafe7eaddfdbf44b6fbbced1c825f5, type: 3}
+    - {fileID: 21300000, guid: 8d9c0c8e8779c8d47a7560adc084f232, type: 3}
+    - {fileID: 21300000, guid: c4417f93e6f882845beb4b7b215aee2a, type: 3}
+    - {fileID: 21300000, guid: 9feb3e66dcdfa7e4fac57e568efdfb7f, type: 3}
+    framesPerSecond: 10
+    loop: 1
+  - name: sit
+    frames:
+    - {fileID: 21300000, guid: 1aba742b62d2c8b44a27a58ecc8d7e69, type: 3}
+    framesPerSecond: 1
+    loop: 1
+  - name: sleep
+    frames:
+    - {fileID: 21300000, guid: 8efd0733c5c35fd4dbc7f8d0269b8872, type: 3}
+    - {fileID: 21300000, guid: 917971bd08723174aa34cc1ecb124e97, type: 3}
+    framesPerSecond: 0.8
+    loop: 1

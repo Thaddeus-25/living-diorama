@@ -65,6 +65,7 @@ namespace LivingDiorama.Tests
 
         [TestCase("human")]
         [TestCase("cat")]
+        [TestCase("dog")]
         public void Creatures_HaveAFlatUnclickableContactShadow(string id)
         {
             var shadow = database.Find(id).Prefab.transform.Find("ContactShadow");

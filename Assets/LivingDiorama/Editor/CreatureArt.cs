@@ -41,6 +41,14 @@ namespace LivingDiorama.EditorTools
             new("stretch", 1, 1f),
         };
 
+        public static readonly ClipSpec[] DogClips =
+        {
+            new("idle", 2, 3f), // tail wag
+            new("walk", 4, 10f),
+            new("sit", 1, 1f),
+            new("sleep", 2, 0.8f),
+        };
+
         public static string FrameName(string creature, string clip, int frame) => $"{creature}_{clip}_{frame}";
 
         public static IEnumerable<ArtSpec> Specs()
@@ -60,6 +68,102 @@ namespace LivingDiorama.EditorTools
                     int frameIndex = frame;
                     yield return new ArtSpec(FrameName("Cat", clipName, frameIndex), ArtKind.Sprite, () => PaintCat(clipName, frameIndex));
                 }
+
+            foreach (var clip in DogClips)
+                for (int frame = 0; frame < clip.Frames; frame++)
+                {
+                    string clipName = clip.Name;
+                    int frameIndex = frame;
+                    yield return new ArtSpec(FrameName("Dog", clipName, frameIndex), ArtKind.Sprite, () => PaintDog(clipName, frameIndex));
+                }
+        }
+
+        // ------------------------------------------------------------------ dog (24 x 17 px, about 1.4 m nose to tail)
+
+        private static readonly Color32 DogCoat = PixelCanvas.Hex("#b9824e");
+        private static readonly Color32 DogCoatLight = PixelCanvas.Hex("#d9a876");
+        private static readonly Color32 DogCoatShade = PixelCanvas.Hex("#8f5f34");
+        private static readonly Color32 DogEar = PixelCanvas.Hex("#6b4527");
+        private static readonly Color32 DogMuzzle = PixelCanvas.Hex("#e6c39a");
+        private static readonly Color32 Collar = PixelCanvas.Hex("#c94a4a");
+
+        private static PixelCanvas PaintDog(string clip, int frame)
+        {
+            var canvas = new PixelCanvas(24, 17);
+            switch (clip)
+            {
+                case "sit": PaintDogSitting(canvas); break;
+                case "sleep": PaintDogSleeping(canvas, breathingIn: frame == 1); break;
+                default:
+                    // Feet x positions: (back near, back far, front far, front near).
+                    var feet = clip == "walk"
+                        ? frame switch
+                        {
+                            0 => new[] { 6, 6, 13, 16 },
+                            1 => new[] { 5, 7, 14, 15 },
+                            2 => new[] { 4, 8, 15, 14 },
+                            _ => new[] { 5, 7, 14, 15 }
+                        }
+                        : new[] { 5, 7, 14, 16 };
+                    bool tailHigh = clip != "idle" || frame == 0;
+                    PaintDogStanding(canvas, feet, tailHigh);
+                    break;
+            }
+            canvas.Outline(PixelCanvas.Hex("#2e1f14"));
+            return canvas;
+        }
+
+        private static void PaintDogStanding(PixelCanvas canvas, int[] feet, bool tailHigh)
+        {
+            // Far legs first, darker, behind the body.
+            canvas.FillRect(feet[1], 1, 2, 5, DogCoatShade);
+            canvas.FillRect(feet[2], 1, 2, 5, DogCoatShade);
+
+            // Tail: up for a wag, out to the side on the other frame.
+            var tail = tailHigh
+                ? new[] { (4, 8), (3, 9), (3, 10), (2, 11), (2, 12) }
+                : new[] { (4, 8), (3, 8), (2, 9), (1, 9), (0, 10) };
+            foreach (var (x, y) in tail) canvas.Set(x, y, DogCoat);
+
+            canvas.FillEllipse(11f, 7.5f, 7f, 3f, DogCoat);
+            canvas.FillEllipse(12f, 6.2f, 4.5f, 1.2f, DogCoatLight); // belly
+
+            canvas.FillRect(feet[0], 1, 2, 5, DogCoat);
+            canvas.FillRect(feet[3], 1, 2, 5, DogCoat);
+
+            PaintDogHead(canvas, centerX: 18.5f, centerY: 11f, eyesOpen: true);
+            canvas.ShadeEdges(DogCoat, DogCoatLight, DogCoatShade, 1);
+        }
+
+        private static void PaintDogSitting(PixelCanvas canvas)
+        {
+            foreach (var (x, y) in new[] { (6, 1), (5, 1), (4, 1), (3, 2) }) canvas.Set(x, y, DogCoat); // tail on the ground
+            canvas.FillEllipse(10f, 5.5f, 4.2f, 4.8f, DogCoat);
+            canvas.FillEllipse(12f, 5f, 1.6f, 3f, DogCoatLight); // chest
+            canvas.FillRect(12, 1, 2, 4, DogCoat);
+            canvas.FillRect(14, 1, 1, 3, DogCoatShade);
+            PaintDogHead(canvas, centerX: 13.5f, centerY: 11.5f, eyesOpen: true);
+            canvas.ShadeEdges(DogCoat, DogCoatLight, DogCoatShade, 1);
+        }
+
+        private static void PaintDogSleeping(PixelCanvas canvas, bool breathingIn)
+        {
+            canvas.FillEllipse(11f, 3.2f, 7.5f, breathingIn ? 3f : 2.7f, DogCoat);
+            canvas.FillRect(5, 1, 11, 1, DogCoatShade); // tail and paws tucked in front
+            PaintDogHead(canvas, centerX: 17.5f, centerY: 3.8f, eyesOpen: false);
+            canvas.ShadeEdges(DogCoat, DogCoatLight, DogCoatShade, 1);
+        }
+
+        private static void PaintDogHead(PixelCanvas canvas, float centerX, float centerY, bool eyesOpen)
+        {
+            int cx = Mathf.RoundToInt(centerX), cy = Mathf.RoundToInt(centerY);
+            canvas.FillRect(cx - 3, cy - 3, 2, 2, Collar);
+            canvas.FillEllipse(centerX, centerY, 3.2f, 2.8f, DogCoat);
+            canvas.FillRect(cx + 1, cy - 2, 3, 2, DogMuzzle); // snout
+            canvas.Set(cx + 4, cy - 1, Eye);                 // nose
+            canvas.FillRect(cx - 2, cy - 2, 2, 4, DogEar);    // floppy ear
+            if (eyesOpen) canvas.Set(cx + 1, cy + 1, Eye);
+            else canvas.FillRect(cx, cy + 1, 2, 1, DogCoatShade);
         }
 
         // ------------------------------------------------------------------ human (16 x 30 px, about 1.7 m)

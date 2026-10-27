@@ -122,6 +122,17 @@ namespace LivingDiorama.EditorTools
                     new BehaviourWeight(EntityBehaviour.LookAround, 1f, new Vector2(2f, 4f)),
                     BehaviourWeight.Interact(InteractionType.Sleep, 1.5f, new Vector2(10f, 20f)),
                 }),
+            // Livelier than the cat: faster, roams further, rests less.
+            new("dog", "Dog", CreatureArt.DogClips, new Vector2(1.0f, 0.5f),
+                moveSpeed: 1.8f, wanderRadius: 7f, agentRadius: 0.25f, new[]
+                {
+                    new BehaviourWeight(EntityBehaviour.Idle, 2f, new Vector2(1.5f, 3.5f)),
+                    new BehaviourWeight(EntityBehaviour.Wander, 6f, new Vector2(6f, 12f)),
+                    new BehaviourWeight(EntityBehaviour.LookAround, 2f, new Vector2(2f, 4f)),
+                    new BehaviourWeight(EntityBehaviour.Rest, 2f, new Vector2(3f, 7f), "sit"),
+                    new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(8f, 16f), "sleep"),
+                    BehaviourWeight.Interact(InteractionType.Sleep, 1f, new Vector2(10f, 18f)),
+                }),
         };
 
         [MenuItem("Living Diorama/Rebuild Generated Assets")]
