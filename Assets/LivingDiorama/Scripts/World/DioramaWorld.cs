@@ -111,7 +111,9 @@ namespace LivingDiorama.World
             {
                 id = placed.InstanceId,
                 definitionId = placed.Definition != null ? placed.Definition.Id : null,
-                position = placed.transform.position,
+                // Objects stand on the ground (y = 0); walking creatures float a few cm higher on the
+                // NavMesh, so snapshots and saves are normalised the same way loading places them.
+                position = ClampToGarden(placed.TryGetComponent(out IPlacementAware aware) ? aware.SavedPosition : placed.transform.position),
                 yaw = placed.Yaw,
                 scale = placed.transform.localScale.x,
                 flipX = placed.FlipX
@@ -132,6 +134,7 @@ namespace LivingDiorama.World
         public void Move(PlacedObject placed, Vector3 position)
         {
             placed.transform.position = ClampToGarden(position);
+            NotifyPlacementApplied(placed);
             ObjectChanged?.Invoke(placed);
         }
 
@@ -151,6 +154,12 @@ namespace LivingDiorama.World
             placed.transform.localScale = Vector3.one * Mathf.Clamp(data.scale, 0.1f, 10f);
             placed.Yaw = placed.Definition != null && !placed.Definition.AllowRotation ? 0f : data.yaw;
             placed.FlipX = data.flipX;
+            NotifyPlacementApplied(placed);
+        }
+
+        private static void NotifyPlacementApplied(PlacedObject placed)
+        {
+            foreach (var aware in placed.GetComponents<IPlacementAware>()) aware.OnPlacementApplied();
         }
 
         private static void DestroyObject(GameObject target)

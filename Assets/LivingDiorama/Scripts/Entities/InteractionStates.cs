@@ -86,6 +86,7 @@ namespace LivingDiorama.Entities
     /// Uses a reserved interaction point: slides from the approach spot onto the point (which sits
     /// inside the object's no-walk area), holds the pose, slides back off and releases the point.
     /// While on the point the NavMesh agent is detached so it doesn't pull the creature back.
+    /// The creature follows the point if its object is moved (e.g. a bench dragged in the editor).
     /// </summary>
     public sealed class InteractState : EntityState
     {
@@ -94,7 +95,7 @@ namespace LivingDiorama.Entities
         private enum Phase { SlideIn, Hold, SlideOut }
 
         private readonly InteractionPoint point;
-        private readonly Vector3 approach;
+        private Vector3 approach;
         private readonly float holdSeconds;
         private readonly string name;
         private readonly string animation;
@@ -119,6 +120,16 @@ namespace LivingDiorama.Entities
         public InteractionPoint Point => point;
         public bool IsHolding => phase == Phase.Hold;
 
+        /// <summary>The walkable spot in front of the point, where the creature stands up to.</summary>
+        public Vector3 StandPosition
+        {
+            get
+            {
+                RefreshApproach();
+                return approach;
+            }
+        }
+
         public override void Enter(LivingEntity entity)
         {
             base.Enter(entity);
@@ -142,6 +153,7 @@ namespace LivingDiorama.Entities
             switch (phase)
             {
                 case Phase.SlideIn:
+                    if (!pointGone) spot = point.Position;
                     entity.transform.position = Vector3.Lerp(slideFrom, spot, phaseTime / SlideSeconds);
                     if (phaseTime >= SlideSeconds)
                     {
@@ -152,6 +164,7 @@ namespace LivingDiorama.Entities
                     break;
 
                 case Phase.Hold:
+                    entity.transform.position = point.Position; // stay on the seat if the bench moves
                     if (phaseTime >= holdSeconds)
                     {
                         BeginPhase(Phase.SlideOut, entity.transform.position);
@@ -169,6 +182,7 @@ namespace LivingDiorama.Entities
         /// <summary>Always runs, even when interrupted (mode switch, object removed): back on the NavMesh, point released.</summary>
         public override void Exit(LivingEntity entity)
         {
+            RefreshApproach();
             if (point != null) point.Release(entity);
 
             entity.transform.position = approach;
@@ -182,6 +196,15 @@ namespace LivingDiorama.Entities
             phase = next;
             phaseTime = 0f;
             slideFrom = from;
+            if (next == Phase.SlideOut) RefreshApproach();
+        }
+
+        /// <summary>The object may have moved since we arrived, so find the walkable spot in front of it again.</summary>
+        private void RefreshApproach()
+        {
+            if (point == null) return; // destroyed: keep the last known spot
+            if (NavMesh.SamplePosition(point.ApproachPosition, out var hit, 1f, NavMesh.AllAreas))
+                approach = hit.position;
         }
     }
 }

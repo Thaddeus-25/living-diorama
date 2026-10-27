@@ -77,7 +77,10 @@ namespace LivingDiorama.Tests
 
             yield return WaitFor(() => Using(human) == null, 6f);
             Assert.IsNull(Using(human), "Human should get up after the sit duration");
-            Assert.IsFalse(seat.IsReservedBy(human), "Seat must be released");
+            // The human may decide to sit again right away, which legitimately reserves a seat anew.
+            bool seekingSameSeatAgain = human.CurrentState is SeekInteractionState { Target: var target } && target == seat;
+            Assert.IsTrue(!seat.IsReservedBy(human) || seekingSameSeatAgain,
+                $"Seat must be released (state now: {human.CurrentState?.Name})");
             Assert.IsTrue(human.Agent.updatePosition);
             Assert.IsTrue(human.Agent.isOnNavMesh, "Back on walkable ground");
             Assert.Greater(Vector3.Distance(human.transform.position, seat.Position), 0.4f, "Stepped off the bench");
@@ -127,7 +130,7 @@ namespace LivingDiorama.Tests
         }
 
         [UnityTest]
-        public IEnumerator SwitchingToEditWhileSitting_StepsOffAndReleasesSeat()
+        public IEnumerator PausingCreaturesWhileSitting_StepsOffAndReleasesSeat()
         {
             modes.SetMode(AppMode.Preview);
             yield return null;
@@ -138,18 +141,68 @@ namespace LivingDiorama.Tests
 
             modes.SetMode(AppMode.Edit);
             yield return null;
+            Assert.IsNotNull(Using(human), "Edit mode alone doesn't interrupt a living creature");
 
+            modes.SetCreaturesPausedInEdit(true);
+            yield return null;
             Assert.IsFalse(seat.IsReservedBy(human));
             Assert.IsFalse(human.IsSimulating);
             Assert.IsFalse(human.Agent.enabled);
             Assert.Greater(Vector3.Distance(human.transform.position, seat.Position), 0.4f,
-                "Edit mode should leave the human standing in front of the bench, not inside it");
+                "Pausing should leave the human standing in front of the bench, not inside it");
 
             // And the seat is usable again next time.
-            modes.SetMode(AppMode.Preview);
+            modes.SetCreaturesPausedInEdit(false);
             yield return null;
             human.StartBehaviour(Sit(2f));
             Assert.AreEqual("Seek Sit", human.CurrentState.Name);
+        }
+
+        [UnityTest]
+        public IEnumerator SelectingASittingHuman_GetsThemUp()
+        {
+            human.StartBehaviour(Sit(30f));
+            yield return WaitFor(() => Using(human)?.IsHolding == true, 15f);
+            var seat = Using(human)?.Point;
+            Assert.IsNotNull(seat, "Human didn't sit");
+
+            editor.Select(human.Placed);
+            Assert.IsTrue(human.IsHeld);
+            Assert.IsFalse(seat.IsReservedBy(human));
+            Assert.Greater(Vector3.Distance(human.transform.position, seat.Position), 0.4f, "Stepped off to be dragged");
+        }
+
+        [UnityTest]
+        public IEnumerator DraggingTheBench_CarriesTheSitterAlong()
+        {
+            cat.StartBehaviour(new BehaviourWeight(EntityBehaviour.Rest, 1f, new Vector2(60f, 60f), "sleep"));
+            human.StartBehaviour(Sit(30f));
+            yield return WaitFor(() => Using(human)?.IsHolding == true, 15f);
+            var seat = Using(human)?.Point;
+            Assert.IsNotNull(seat, "Human didn't sit");
+
+            editor.Select(bench);
+            world.Move(bench, bench.transform.position + new Vector3(-3f, 0f, -1f));
+            yield return null;
+            yield return null;
+
+            Assert.IsNotNull(Using(human), "Still sitting");
+            Assert.Less(Vector3.Distance(human.transform.position, seat.Position), 0.05f, "On the seat's new position");
+        }
+
+        [UnityTest]
+        public IEnumerator SavingWhileSitting_RecordsTheSpotInFrontOfTheBench()
+        {
+            human.StartBehaviour(Sit(30f));
+            yield return WaitFor(() => Using(human)?.IsHolding == true, 15f);
+            Assert.IsNotNull(Using(human), "Human didn't sit");
+
+            var saved = world.Capture(human.Placed).position;
+            var benchObstacle = bench.GetComponent<NavMeshObstacle>();
+            var local = bench.transform.InverseTransformPoint(saved) - benchObstacle.center;
+            bool insideBench = Mathf.Abs(local.x) < benchObstacle.size.x * 0.5f && Mathf.Abs(local.z) < benchObstacle.size.z * 0.5f;
+            Assert.IsFalse(insideBench, $"Saved position {saved} is inside the bench");
+            Assert.IsNotNull(Using(human), "Capturing doesn't disturb the sitter");
         }
 
         [UnityTest]

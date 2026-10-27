@@ -113,7 +113,9 @@ namespace LivingDiorama.SceneEditing
         {
             if (ReferenceEquals(Selected, placed)) return;
             CommitPendingEdit();
+            SetHeld(Selected, false);
             Selected = placed;
+            SetHeld(placed, true);
             if (selectionIndicator != null) selectionIndicator.Show(placed);
             SelectionChanged?.Invoke();
         }
@@ -253,6 +255,7 @@ namespace LivingDiorama.SceneEditing
             else if (ctrl && keyboard.dKey.wasPressedThisFrame) DuplicateSelected();
             else if (keyboard.deleteKey.wasPressedThisFrame || keyboard.backspaceKey.wasPressedThisFrame) DeleteSelected();
             else if (keyboard.gKey.wasPressedThisFrame) SetGridSnap(!GridSnapEnabled);
+            else if (keyboard.pKey.wasPressedThisFrame) modes.SetCreaturesPausedInEdit(!modes.CreaturesPausedInEdit);
             else if (keyboard.rKey.wasPressedThisFrame) RotateSelected(shift ? -rotateStep : rotateStep);
             else if (keyboard.escapeKey.wasPressedThisFrame)
             {
@@ -311,6 +314,16 @@ namespace LivingDiorama.SceneEditing
             pressedObject = null;
             isDragging = false;
             dragBefore = null;
+        }
+
+        /// <summary>
+        /// The selected creature is held (paused) so it can be dragged and edited without walking
+        /// off; it carries on when deselected.
+        /// </summary>
+        private static void SetHeld(PlacedObject placed, bool held)
+        {
+            // Unity's null check also skips objects that were destroyed (e.g. by undo).
+            if (placed != null && placed.TryGetComponent(out LivingEntity creature)) creature.SetHeld(held);
         }
 
         /// <summary>A moving obstacle shouldn't carve the NavMesh on every frame of a drag.</summary>
@@ -434,6 +447,7 @@ namespace LivingDiorama.SceneEditing
 
         private void ClearSelection()
         {
+            SetHeld(Selected, false);
             Selected = null;
             if (selectionIndicator != null) selectionIndicator.Show(null);
             SelectionChanged?.Invoke();

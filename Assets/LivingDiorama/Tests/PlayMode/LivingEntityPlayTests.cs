@@ -35,23 +35,101 @@ namespace LivingDiorama.Tests
         public void ResetTime() => Time.timeScale = 1f;
 
         [UnityTest]
-        public IEnumerator EditMode_CreaturesStandStill()
+        public IEnumerator EditMode_CreaturesKeepLivingByDefault()
         {
             Assert.AreEqual(2, creatures.Count, "Garden should start with a human and a cat");
+            Assert.AreEqual(AppMode.Edit, modes.Mode);
+            Assert.IsFalse(modes.CreaturesPausedInEdit);
+            yield return null;
+            foreach (var creature in creatures)
+            {
+                Assert.IsTrue(creature.IsSimulating, $"{creature.name} should live while editing");
+                Assert.IsTrue(creature.Agent.isOnNavMesh);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator PauseToggle_FreezesCreaturesInEdit_ButPreviewStillRunsThem()
+        {
+            modes.SetCreaturesPausedInEdit(true);
+            yield return null;
             var start = creatures.Select(c => c.transform.position).ToList();
-
             for (int i = 0; i < 30; i++) yield return null;
-
             for (int i = 0; i < creatures.Count; i++)
             {
                 Assert.IsFalse(creatures[i].IsSimulating);
                 Assert.IsFalse(creatures[i].Agent.enabled, "Agent must be off so the creature can be dragged");
                 Assert.AreEqual(start[i], creatures[i].transform.position);
             }
+
+            modes.SetMode(AppMode.Preview);
+            yield return null;
+            Assert.IsTrue(creatures.All(c => c.IsSimulating), "Preview always runs creatures");
+
+            modes.SetMode(AppMode.Edit);
+            yield return null;
+            Assert.IsTrue(creatures.All(c => !c.IsSimulating), "Back in Edit the pause applies again");
+
+            modes.SetCreaturesPausedInEdit(false);
+            yield return null;
+            Assert.IsTrue(creatures.All(c => c.IsSimulating));
         }
 
         [UnityTest]
-        public IEnumerator Preview_ForcedWander_MovesAroundAndStopsInEditMode()
+        public IEnumerator SelectedCreature_IsHeld_AndCarriesOnWhenDeselected()
+        {
+            var editor = Object.FindAnyObjectByType<LivingDiorama.SceneEditing.SceneEditorController>();
+            var cat = creatures.First(c => c.Definition.Id == "cat");
+            yield return null;
+            Assert.IsTrue(cat.IsSimulating);
+
+            editor.Select(cat.Placed);
+            Assert.IsTrue(cat.IsHeld);
+            Assert.IsFalse(cat.IsSimulating);
+            Assert.IsFalse(cat.Agent.enabled, "A held creature can be dragged");
+            var heldAt = cat.transform.position;
+            for (int i = 0; i < 20; i++) yield return null;
+            Assert.AreEqual(heldAt, cat.transform.position, "A held creature stays put");
+
+            // Dragging it somewhere new, then letting go: it lives on from there.
+            world.Move(cat.Placed, new Vector3(-6f, 0f, -4f));
+            editor.Select(null);
+            yield return null;
+            Assert.IsFalse(cat.IsHeld);
+            Assert.IsTrue(cat.IsSimulating);
+            Assert.Less(Vector3.Distance(cat.transform.position, new Vector3(-6f, 0f, -4f)), 0.3f);
+        }
+
+        [UnityTest]
+        public IEnumerator UndoMovingAWalkingCreature_RelocatesItsAgent()
+        {
+            var editor = Object.FindAnyObjectByType<LivingDiorama.SceneEditing.SceneEditorController>();
+            var human = creatures.First(c => c.Definition.Id == "human");
+            var before = world.Capture(human.Placed);
+            var after = before.Clone();
+            after.position = new Vector3(5f, 0f, -4.5f);
+            editor.Commands.Execute(new LivingDiorama.SceneEditing.Commands.ModifyObjectCommand(world, before, after));
+            yield return null;
+
+            Assert.IsTrue(human.IsSimulating);
+            Assert.Less(Vector3.Distance(human.transform.position, after.position), 0.3f, "Moved, not snapped back by its agent");
+            Assert.Less(Vector3.Distance(human.Agent.nextPosition, human.transform.position), 0.05f, "Agent moved with it");
+        }
+
+        [UnityTest]
+        public IEnumerator PlacingACreatureWhileLiving_StartsWhereItWasPlaced()
+        {
+            var editor = Object.FindAnyObjectByType<LivingDiorama.SceneEditing.SceneEditorController>();
+            var spot = new Vector3(-7f, 0f, -4.5f);
+            var placed = editor.PlaceAt(world.Database.Find("cat"), spot).GetComponent<LivingEntity>();
+            editor.Select(null);
+            yield return null;
+            Assert.IsTrue(placed.IsSimulating);
+            Assert.Less(Vector3.Distance(placed.transform.position, spot), 0.3f, "Not at the prefab's origin");
+        }
+
+        [UnityTest]
+        public IEnumerator Preview_ForcedWander_MovesAroundAndStopsWhenPaused()
         {
             modes.SetMode(AppMode.Preview);
             yield return null;
@@ -73,11 +151,12 @@ namespace LivingDiorama.Tests
             Assert.Greater(maxDistance, 0.5f, "The cat should have walked somewhere");
 
             modes.SetMode(AppMode.Edit);
+            modes.SetCreaturesPausedInEdit(true);
             yield return null;
             var frozenAt = cat.transform.position;
             for (int i = 0; i < 20; i++) yield return null;
             Assert.IsFalse(cat.IsSimulating);
-            Assert.AreEqual(frozenAt, cat.transform.position, "Creatures freeze in Edit mode");
+            Assert.AreEqual(frozenAt, cat.transform.position, "Paused creatures freeze in Edit mode");
         }
 
         [UnityTest]

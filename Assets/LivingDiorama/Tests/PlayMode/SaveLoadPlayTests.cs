@@ -56,6 +56,9 @@ namespace LivingDiorama.Tests
         [UnityTest]
         public IEnumerator EditSaveNewLoad_RestoresSceneAndCreaturesStillLive()
         {
+            // Freeze creatures so positions can be compared exactly before and after.
+            modes.SetCreaturesPausedInEdit(true);
+            yield return null;
             Assert.IsFalse(service.IsDirty);
             var extraTree = editor.PlaceAt(world.Database.Find("tree"), new Vector3(-8f, 0f, -4f));
             Assert.IsTrue(service.IsDirty, "Editing marks the scene as unsaved");
@@ -74,7 +77,11 @@ namespace LivingDiorama.Tests
             yield return null;
             Assert.AreEqual(snapshot.Count, world.Objects.Count);
             foreach (var saved in snapshot)
-                Assert.IsTrue(world.Capture(world.Find(saved.id)).ApproximatelyEquals(saved), $"{saved.definitionId} {saved.id} changed");
+            {
+                var loaded = world.Capture(world.Find(saved.id));
+                Assert.IsTrue(loaded.ApproximatelyEquals(saved),
+                    $"{saved.definitionId} changed: saved {saved.position:F3}, loaded {loaded.position:F3}");
+            }
             Assert.IsNotNull(world.Find(extraTree.InstanceId), "The tree placed before saving comes back");
 
             // The loaded scene is fully alive: creatures run and the bench is usable.

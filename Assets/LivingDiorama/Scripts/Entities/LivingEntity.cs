@@ -7,12 +7,12 @@ using UnityEngine.AI;
 namespace LivingDiorama.Entities
 {
     /// <summary>
-    /// The "brain" of a creature. While the simulation runs (Preview mode) it moves through states
-    /// chosen from its <see cref="EntityDefinition"/>'s behaviour table. In Edit mode the agent is
-    /// switched off, so the creature stands still and can be dragged freely.
+    /// The "brain" of a creature. While the simulation runs it moves through states chosen from its
+    /// <see cref="EntityDefinition"/>'s behaviour table. It stops (agent switched off, so it can be
+    /// dragged freely) when the simulation is paused or while it is held, e.g. selected in the editor.
     /// </summary>
     [RequireComponent(typeof(PlacedObject), typeof(NavMeshAgent))]
-    public class LivingEntity : MonoBehaviour
+    public class LivingEntity : MonoBehaviour, IPlacementAware
     {
         [SerializeField] private SpriteAnimator animator;
         [Tooltip("When the simulation starts, how far (metres) to search for walkable ground.")]
@@ -27,6 +27,7 @@ namespace LivingDiorama.Entities
         private readonly StateMachine<LivingEntity> brain = new();
         private AppModeController modes;
         private int movingPriority;
+        private bool held;
 
         public PlacedObject Placed { get; private set; }
         public NavMeshAgent Agent { get; private set; }
@@ -34,6 +35,7 @@ namespace LivingDiorama.Entities
         public EntityDefinition Definition => Placed != null ? Placed.Definition as EntityDefinition : null;
         public System.Random Random { get; private set; }
         public bool IsSimulating { get; private set; }
+        public bool IsHeld => held;
         public IState<LivingEntity> CurrentState => brain.Current;
 
         public void Configure(SpriteAnimator spriteAnimator) => animator = spriteAnimator;
@@ -49,15 +51,49 @@ namespace LivingDiorama.Entities
         private void OnEnable()
         {
             modes = AppModeController.Instance;
-            if (modes != null) modes.ModeChanged += OnModeChanged;
-            // Without a mode controller (e.g. isolated tests) the creature simply lives.
-            SetSimulating(modes == null || modes.IsSimulationRunning);
+            if (modes != null) modes.SimulationChanged += OnSimulationChanged;
+            RefreshSimulating();
         }
 
         private void OnDisable()
         {
-            if (modes != null) modes.ModeChanged -= OnModeChanged;
+            if (modes != null) modes.SimulationChanged -= OnSimulationChanged;
             SetSimulating(false);
+        }
+
+        /// <summary>
+        /// Holding pauses just this creature (the editor holds the selected one so it can be dragged
+        /// and edited). A sitting creature gets up first. Releasing lets it carry on.
+        /// </summary>
+        public void SetHeld(bool isHeld)
+        {
+            if (held == isHeld) return;
+            held = isHeld;
+            RefreshSimulating();
+        }
+
+        /// <summary>
+        /// Where to record this creature: while sitting on a bench (inside its no-walk area) it's
+        /// the walkable spot in front of the seat, so saves never place it inside an object.
+        /// </summary>
+        public Vector3 SavedPosition =>
+            brain.Current is InteractState interaction ? interaction.StandPosition : transform.position;
+
+        /// <summary>The editor, undo or a load moved this creature: continue from the new spot.</summary>
+        public void OnPlacementApplied()
+        {
+            if (!IsSimulating) return;
+            var target = transform.position;
+            SetSimulating(false); // exits the current state (which may step off a bench)
+            transform.position = target;
+            RefreshSimulating();
+        }
+
+        private void RefreshSimulating()
+        {
+            // Without a mode controller (e.g. isolated tests) the creature simply lives.
+            bool simulationOn = modes == null || modes.IsSimulationRunning;
+            SetSimulating(simulationOn && !held && isActiveAndEnabled);
         }
 
         /// <summary>Makes behaviour repeatable (tests, debugging).</summary>
@@ -162,6 +198,6 @@ namespace LivingDiorama.Entities
             Agent.avoidancePriority = StationaryPriority;
         }
 
-        private void OnModeChanged(AppMode mode) => SetSimulating(mode == AppMode.Preview);
+        private void OnSimulationChanged(bool running) => RefreshSimulating();
     }
 }

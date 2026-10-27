@@ -15,7 +15,7 @@ namespace LivingDiorama.UI
     public class EditorHud : MonoBehaviour
     {
         private const string EditHint =
-            "Click to select  ·  Drag to move  ·  R rotate  ·  Ctrl+D duplicate  ·  Del delete  ·  G grid  ·  Ctrl+Z / Ctrl+Y undo/redo  ·  Scroll zoom  ·  Tab preview";
+            "Click to select  ·  Drag to move  ·  R rotate  ·  Ctrl+D duplicate  ·  Del delete  ·  G grid  ·  P pause creatures  ·  Ctrl+Z / Ctrl+Y undo/redo  ·  Scroll zoom  ·  Tab preview";
 
         [SerializeField] private SceneEditorController editor;
         [SerializeField] private AppModeController modes;
@@ -35,6 +35,7 @@ namespace LivingDiorama.UI
         private Button undoButton;
         private Button redoButton;
         private Toggle gridToggle;
+        private Toggle pauseToggle;
         private ObjectLibraryPanel library;
         private PropertiesPanel properties;
         private DialogPanel dialog;
@@ -56,11 +57,13 @@ namespace LivingDiorama.UI
             undoButton = root.Q<Button>("undo-button");
             redoButton = root.Q<Button>("redo-button");
             gridToggle = root.Q<Toggle>("grid-toggle");
+            pauseToggle = root.Q<Toggle>("pause-toggle");
 
             undoButton.clicked += editor.Undo;
             redoButton.clicked += editor.Redo;
             root.Q<Button>("preview-button").clicked += EnterPreview;
             gridToggle.RegisterValueChangedCallback(OnGridToggled);
+            pauseToggle.RegisterValueChangedCallback(OnPauseToggled);
 
             library = new ObjectLibraryPanel(root.Q("library-panel"), editor);
             properties = new PropertiesPanel(root.Q("properties-panel"), editor);
@@ -74,6 +77,8 @@ namespace LivingDiorama.UI
             editor.Commands.Changed += RefreshHistoryButtons;
             editor.ToolStateChanged += RefreshToolState;
             modes.ModeChanged += OnModeChanged;
+            modes.CreaturePauseChanged += OnCreaturePauseChanged;
+            OnCreaturePauseChanged(modes.CreaturesPausedInEdit);
 
             RefreshHistoryButtons();
             RefreshToolState();
@@ -91,7 +96,11 @@ namespace LivingDiorama.UI
                 if (undoButton != null) undoButton.clicked -= editor.Undo;
                 if (redoButton != null) redoButton.clicked -= editor.Redo;
             }
-            if (modes != null) modes.ModeChanged -= OnModeChanged;
+            if (modes != null)
+            {
+                modes.ModeChanged -= OnModeChanged;
+                modes.CreaturePauseChanged -= OnCreaturePauseChanged;
+            }
             library?.Dispose();
             properties?.Dispose();
             files?.Dispose();
@@ -185,6 +194,10 @@ namespace LivingDiorama.UI
         private void EnterPreview() => modes.SetMode(AppMode.Preview);
 
         private void OnGridToggled(ChangeEvent<bool> change) => editor.SetGridSnap(change.newValue);
+
+        private void OnPauseToggled(ChangeEvent<bool> change) => modes.SetCreaturesPausedInEdit(change.newValue);
+
+        private void OnCreaturePauseChanged(bool paused) => pauseToggle.SetValueWithoutNotify(paused);
 
         private void RefreshHistoryButtons()
         {

@@ -11,6 +11,7 @@
             <ui:Button name="undo-button" text="Undo" class="tool-button" tooltip="Undo (Ctrl+Z)" />
             <ui:Button name="redo-button" text="Redo" class="tool-button" tooltip="Redo (Ctrl+Y)" />
             <ui:Toggle name="grid-toggle" text="Grid snap" class="grid-toggle" tooltip="Snap to a 0.5 m grid (G)" />
+            <ui:Toggle name="pause-toggle" text="Pause creatures" class="grid-toggle" tooltip="Freeze creatures while editing (P). Preview always runs them." />
             <ui:VisualElement class="spacer" picking-mode="Ignore" />
             <ui:Button name="preview-button" text="Preview" class="tool-button accent" tooltip="Hide the editor and watch the diorama (Tab)" />
         </ui:VisualElement>

@@ -20,6 +20,7 @@ Pixel-art sprites stand in a lit 3D world, viewed through a fixed, angled orthog
 | Rotate | **R** (Shift+R reverses) or the Rotation slider |
 | Duplicate / delete | **Ctrl+D** / **Delete**, or the panel buttons |
 | Grid snap (0.5 m) | **G** or the toggle |
+| Pause creatures while editing | **P** or the toggle |
 | Undo / redo | **Ctrl+Z** / **Ctrl+Y** (or Ctrl+Shift+Z) |
 | Preview mode | **Tab** or the **Preview** button; **Tab** again returns to editing |
 | Zoom | Mouse wheel |
@@ -42,7 +43,9 @@ unsaved changes; New and Load ask before discarding them.
   `SaveMigrations`.
 
 ## Living creatures
-Creatures only act in **Preview** mode. In Edit mode they freeze so you can select and move them.
+Creatures keep living while you edit. Selecting one pauses just that creature (a sitting one
+gets up) so you can drag it or change its properties; it carries on when you deselect it.
+Turn on **Pause creatures** (or press **P**) to freeze them all while editing. Preview always runs them.
 Each creature's behaviour comes from its definition asset (`Definitions/Human.asset`,
 `Definitions/Cat.asset`), which you can tune in the Inspector:
 
