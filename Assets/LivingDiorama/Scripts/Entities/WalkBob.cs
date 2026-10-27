@@ -17,6 +17,7 @@ namespace LivingDiorama.Entities
         [SerializeField, Min(0)] private int bobPixels = 1;
 
         private SpriteAnimator animator;
+        private bool hasApplied;
 
         /// <summary>The current lift in metres (before the creature's scale).</summary>
         public float CurrentLift { get; private set; }
@@ -27,7 +28,10 @@ namespace LivingDiorama.Entities
         {
             bool walking = animator.CurrentClipName == SpriteAnimationSet.Walk;
             bool upFrame = animator.CurrentFrame % 2 == 0;
-            CurrentLift = walking && upFrame ? bobPixels / (float)PixelsPerUnit : 0f;
+            float lift = walking && upFrame ? bobPixels / (float)PixelsPerUnit : 0f;
+            if (Mathf.Approximately(lift, CurrentLift) && hasApplied) return; // the offset rides along with the parent
+            CurrentLift = lift;
+            hasApplied = true;
 
             // Lift along the sprite's own up axis (it faces the camera), so the step is one screen-aligned pixel.
             var parent = transform.parent;

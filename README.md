@@ -28,6 +28,18 @@ Pixel-art sprites stand in a lit 3D world, viewed through a fixed, angled orthog
 "Depth" in the properties panel is the object's distance from the front edge (world Z). Since
 the world is 3D, depth alone decides what's drawn in front.
 
+## Look and feel
+- **Tilt-shift blur.** The sky and hills soften towards the top of the screen and the garden stays
+  sharp, like a photo of a miniature. URP's depth of field assumes a perspective camera, so this
+  is a custom pass (`TiltShiftFeature`). Tune it on `Settings/PC_Renderer.asset` under
+  *Renderer Features*.
+- **Post-processing.** Soft bloom, a light vignette and warm colour grading come from the
+  generated `Settings/DioramaVolumeProfile.asset`.
+- **Creatures.** They have soft contact shadows and bob one pixel per step while walking.
+- **Trees.** They drop the odd falling leaf.
+- **Editor feedback.** A faint blue ring shows what a click would select. The placement preview
+  is tinted blue.
+
 ## Saving and loading
 Use **New**, **Save** (or **Ctrl+S**) and **Load** in the top bar. A `*` after the scene name means
 unsaved changes; New and Load ask before discarding them.
@@ -100,6 +112,8 @@ UNITY="/c/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Unity.exe"
 "$UNITY" -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults TestResults-PlayMode.xml
 # Render the scene to Verification/garden.png
 "$UNITY" -batchmode -quit -projectPath . -executeMethod LivingDiorama.EditorTools.ScreenshotCapture.CaptureGarden
+# Benchmark a busy garden (logs "[Perf] ..." lines)
+"$UNITY" -batchmode -projectPath . -runTests -testPlatform PlayMode -testFilter PerformanceProbe
 # Render the scene plus the editor UI to Verification/hud.png
 "$UNITY" -batchmode -projectPath . -runTests -testPlatform PlayMode -testFilter HudScreenshotCapture
 ```

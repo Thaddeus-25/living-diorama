@@ -37,6 +37,7 @@ namespace LivingDiorama.SceneEditing
 
         private static readonly Plane GroundPlane = new(Vector3.up, Vector3.zero);
         private static readonly Color PreviewTint = new(0.65f, 0.85f, 1f, 1f);
+        private static readonly RaycastHit[] RaycastBuffer = new RaycastHit[64];
 
         // Press / drag state.
         private PlacedObject pressedObject;
@@ -358,15 +359,21 @@ namespace LivingDiorama.SceneEditing
 
         private PlacedObject PickObject(Vector2 screenPosition)
         {
+            // Runs every frame for the hover ring, so it reuses a buffer instead of allocating.
             var ray = worldCamera.ScreenPointToRay(screenPosition);
-            var hits = Physics.RaycastAll(ray, 500f, ~0, QueryTriggerInteraction.Collide);
-            Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-            foreach (var hit in hits)
+            int count = Physics.RaycastNonAlloc(ray, RaycastBuffer, 500f, ~0, QueryTriggerInteraction.Collide);
+            PlacedObject nearest = null;
+            float nearestDistance = float.MaxValue;
+            for (int i = 0; i < count; i++)
             {
+                var hit = RaycastBuffer[i];
+                if (hit.distance >= nearestDistance) continue;
                 var placed = hit.collider.GetComponentInParent<PlacedObject>();
-                if (placed != null && world.Find(placed.InstanceId) == placed) return placed;
+                if (placed == null || world.Find(placed.InstanceId) != placed) continue;
+                nearest = placed;
+                nearestDistance = hit.distance;
             }
-            return null;
+            return nearest;
         }
 
         private bool TryGetGroundPoint(Vector2 screenPosition, out Vector3 point)

@@ -80,9 +80,12 @@ namespace LivingDiorama.World
             if (sprite != null && TryGetComponent(out BoxCollider box))
             {
                 // A thin box over the visible sprite, used for mouse picking.
+                // Only when it changes: animation frames are usually the same size, and resizing
+                // a collider rebuilds its physics shape.
                 var bounds = sprite.bounds;
-                box.center = bounds.center;
-                box.size = new Vector3(bounds.size.x, bounds.size.y, 0.1f);
+                var size = new Vector3(bounds.size.x, bounds.size.y, 0.1f);
+                if (box.center != bounds.center) box.center = bounds.center;
+                if (box.size != size) box.size = size;
             }
 
             ApplyFlip();

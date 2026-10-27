@@ -15,7 +15,13 @@ namespace LivingDiorama.World
             if (cam != null) AlignTo(cam);
         }
 
-        public void AlignTo(Camera cam) => transform.rotation = cam.transform.rotation;
+        public void AlignTo(Camera cam)
+        {
+            // The camera rarely rotates; skipping unchanged writes avoids marking the transform
+            // (and its click collider) as moved every frame.
+            var rotation = cam.transform.rotation;
+            if (transform.rotation != rotation) transform.rotation = rotation;
+        }
 
         /// <summary>Aligns every billboard at once. Used by editor tools, where LateUpdate doesn't tick.</summary>
         public static void AlignAll(Camera cam)
