@@ -67,6 +67,23 @@ namespace LivingDiorama.Tests
             Assert.AreEqual(90f, shadow.localEulerAngles.x, 0.01f);
         }
 
+        [Test]
+        public void Trees_DropLeavesThatLandOnTheGround()
+        {
+            var tree = database.Find("tree").Prefab;
+            var leaves = tree.GetComponentInChildren<ParticleSystem>(true);
+            Assert.IsNotNull(leaves, "Falling leaves missing");
+            Assert.AreEqual(ParticleSystemSimulationSpace.World, leaves.main.simulationSpace,
+                "Leaves already falling must not follow a dragged tree");
+            Assert.LessOrEqual(leaves.main.maxParticles, 10, "Keep it cheap");
+            Assert.IsTrue(leaves.collision.enabled);
+            var ground = leaves.collision.GetPlane(0);
+            Assert.IsNotNull(ground, "Leaves need a ground plane to land on");
+            Assert.IsTrue(ground.IsChildOf(tree.transform));
+            Assert.IsNotNull(leaves.GetComponent<ParticleSystemRenderer>().sharedMaterial);
+            Assert.IsNull(database.Find("rock").Prefab.GetComponentInChildren<ParticleSystem>(true), "Only trees drop leaves");
+        }
+
         [TestCase("Assets/LivingDiorama/Settings/PC_Renderer.asset")]
         [TestCase("Assets/LivingDiorama/Settings/Mobile_Renderer.asset")]
         public void Renderers_HaveTiltShiftWithMaterial(string path)

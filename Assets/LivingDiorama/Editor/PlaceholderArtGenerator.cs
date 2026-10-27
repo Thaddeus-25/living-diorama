@@ -52,6 +52,7 @@ namespace LivingDiorama.EditorTools
             new("HillsFar", ArtKind.Sprite, () => PaintHills(9, "#a6c3c4", "#bed6d6", "#98b7b9", 226f, 12f, 7f, 2f, false)),
             new("SelectionRing", ArtKind.CenteredSprite, PaintSelectionRing),
             new("ContactShadow", ArtKind.CenteredSprite, PaintContactShadow),
+            new("Leaf", ArtKind.CenteredSprite, PaintLeaf),
             new("GrassTile", ArtKind.Tile, PaintGrassTile),
             new("DirtTile", ArtKind.Tile, PaintDirtTile),
             new("SkyGradient", ArtKind.Gradient, PaintSky),
@@ -200,6 +201,43 @@ namespace LivingDiorama.EditorTools
                 float distance = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(16f, 16f));
                 if (distance <= 15.5f && distance >= 13.5f) canvas.Set(x, y, ring);
                 else if (distance < 13.5f && distance >= 12.5f) canvas.Set(x, y, edge);
+            }
+            return canvas;
+        }
+
+        /// <summary>A small white leaf; particles tint it green or yellow.</summary>
+        private static PixelCanvas PaintLeaf()
+        {
+            var canvas = new PixelCanvas(8, 8);
+            var leaf = new Color32(255, 255, 255, 255);
+            var vein = new Color32(205, 205, 205, 255);
+            string[] rows =
+            {
+                "#.......", // bottom row (stem)
+                ".###....",
+                ".####...",
+                ".#####..",
+                "..#####.",
+                "...####.",
+                "....###.",
+                "......#.", // top row (tip)
+            };
+            var edge = new Color32(150, 140, 130, 255);
+            for (int y = 0; y < rows.Length; y++)
+            for (int x = 0; x < 8; x++)
+                if (rows[y][x] == '#') canvas.Set(x, y, x == y ? vein : leaf);
+            // Darken the outer pixels so the leaf reads against the grass once tinted.
+            var copy = new bool[8, 8];
+            for (int y = 0; y < 8; y++)
+            for (int x = 0; x < 8; x++)
+                copy[x, y] = canvas.IsOpaque(x, y);
+            for (int y = 0; y < 8; y++)
+            for (int x = 0; x < 8; x++)
+            {
+                if (!copy[x, y]) continue;
+                bool border = x == 0 || y == 0 || x == 7 || y == 7
+                              || !copy[x - 1, y] || !copy[x + 1, y] || !copy[x, y - 1] || !copy[x, y + 1];
+                if (border && x != y) canvas.Set(x, y, edge);
             }
             return canvas;
         }

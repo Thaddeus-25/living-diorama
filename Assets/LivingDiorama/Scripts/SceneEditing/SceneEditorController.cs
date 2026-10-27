@@ -411,6 +411,8 @@ namespace LivingDiorama.SceneEditing
             foreach (var obstacle in preview.GetComponentsInChildren<NavMeshObstacle>(true)) DestroyImmediate(obstacle);
             // Otherwise creatures could try to sit on the preview.
             foreach (var point in preview.GetComponentsInChildren<InteractionPoint>(true)) DestroyImmediate(point);
+            // No effects (falling leaves) from a preview.
+            foreach (var particles in preview.GetComponentsInChildren<ParticleSystem>(true)) DestroyImmediate(particles.gameObject);
             foreach (var collider in preview.GetComponentsInChildren<Collider>(true)) DestroyImmediate(collider);
 
             preview.transform.localScale = Vector3.one * definition.DefaultScale;

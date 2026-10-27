@@ -107,8 +107,11 @@ namespace LivingDiorama.EditorTools
                 var sprite = LoadSprite(art[spec.ArtName]);
                 var definition = LoadOrCreateDefinition(spec, sprite);
                 PropInteractions.TryGetValue(spec.Id, out var interactionPoints);
+                System.Action<GameObject, LivingDiorama.World.SpriteVisual> decorate = spec.Id == "tree"
+                    ? (root, visual) => LeafEffectBuilder.AddFallingLeaves(root, visual, materials.Leaf)
+                    : null;
                 var prefab = PrefabBuilder.BuildProp(definition, sprite, materials.SpriteLit,
-                    $"{PrefabsFolder}/{spec.DisplayName}.prefab", interactionPoints);
+                    $"{PrefabsFolder}/{spec.DisplayName}.prefab", interactionPoints, decorate);
                 definition.SetPrefab(prefab);
                 EditorUtility.SetDirty(definition);
                 definitions.Add(definition);
@@ -149,6 +152,7 @@ namespace LivingDiorama.EditorTools
             {
                 SpriteLit = MaterialFactory.CreateSpriteLit($"{MaterialsFolder}/M_SpriteLit.mat"),
                 Backdrop = MaterialFactory.CreateBackdrop($"{MaterialsFolder}/M_Backdrop.mat"),
+                Leaf = MaterialFactory.CreateParticleUnlit($"{MaterialsFolder}/M_Leaf.mat", LoadTexture(art["Leaf"])),
                 ContactShadow = MaterialFactory.CreateTransparentTint($"{MaterialsFolder}/M_ContactShadow.mat", new Color(0.06f, 0.1f, 0.04f, 0.6f)),
                 Sky = MaterialFactory.CreateUnlitTextured($"{MaterialsFolder}/M_Sky.mat", LoadTexture(art["SkyGradient"])),
                 Grass = MaterialFactory.CreateGround($"{MaterialsFolder}/M_Grass.mat", LoadTexture(art["GrassTile"]),
@@ -297,6 +301,7 @@ namespace LivingDiorama.EditorTools
         public Material SpriteLit;
         public Material Backdrop;
         public Material ContactShadow;
+        public Material Leaf;
         public Material Sky;
         public Material Grass;
         public Material Dirt;
@@ -308,6 +313,7 @@ namespace LivingDiorama.EditorTools
                 SpriteLit = Load("M_SpriteLit"),
                 Backdrop = Load("M_Backdrop"),
                 ContactShadow = Load("M_ContactShadow"),
+                Leaf = Load("M_Leaf"),
                 Sky = Load("M_Sky"),
                 Grass = Load("M_Grass"),
                 Dirt = Load("M_Dirt"),

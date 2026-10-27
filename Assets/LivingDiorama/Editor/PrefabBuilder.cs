@@ -18,7 +18,7 @@ namespace LivingDiorama.EditorTools
     internal static class PrefabBuilder
     {
         public static GameObject BuildProp(ObjectDefinition definition, Sprite sprite, Material material, string path,
-            InteractionPointSpec[] interactionPoints = null)
+            InteractionPointSpec[] interactionPoints = null, System.Action<GameObject, SpriteVisual> decorate = null)
         {
             var root = new GameObject(definition.DisplayName);
             var visual = CreateSpriteVisual(root.transform, sprite, material, castShadows: true);
@@ -47,6 +47,7 @@ namespace LivingDiorama.EditorTools
                 obstacle.carveOnlyStationary = true;
             }
 
+            decorate?.Invoke(root, visual);
             root.transform.localScale = Vector3.one * definition.DefaultScale;
 
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
