@@ -12,10 +12,6 @@
             <ui:Button name="redo-button" text="Redo" class="tool-button" tooltip="Redo (Ctrl+Y)" />
             <ui:Toggle name="grid-toggle" text="Grid snap" class="grid-toggle" tooltip="Snap to a 0.5 m grid (G)" />
             <ui:Toggle name="pause-toggle" text="Pause creatures" class="grid-toggle" tooltip="Freeze creatures while editing (P). Preview always runs them." />
-            <ui:VisualElement class="separator" picking-mode="Ignore" />
-            <ui:Label name="time-label" class="time-label" text="10:00" />
-            <ui:Slider name="time-slider" class="time-slider" low-value="0" high-value="24" tooltip="Time of day" />
-            <ui:Toggle name="time-auto" text="Time passes" class="grid-toggle" tooltip="Let the day go by on its own" />
             <ui:VisualElement class="spacer" picking-mode="Ignore" />
             <ui:Button name="preview-button" text="Preview" class="tool-button accent" tooltip="Hide the editor and watch the diorama (Tab)" />
         </ui:VisualElement>
@@ -44,6 +40,16 @@
         </ui:VisualElement>
 
         <ui:Label name="hint-bar" class="hint-bar" picking-mode="Ignore" />
+
+        <!-- Time of day lives in its own corner panel so the top bar has room. -->
+        <ui:VisualElement name="clock-panel" class="panel clock-panel">
+            <ui:VisualElement class="clock-row">
+                <ui:Label text="Time of day" class="clock-title" />
+                <ui:Label name="time-label" class="time-label" text="10:00" />
+            </ui:VisualElement>
+            <ui:Slider name="time-slider" class="time-slider" low-value="0" high-value="24" tooltip="Drag to set the time" />
+            <ui:Toggle name="time-auto" text="Time passes" class="grid-toggle" tooltip="Let the day go by on its own" />
+        </ui:VisualElement>
     </ui:VisualElement>
 
     <ui:Label name="preview-hint" class="preview-hint" text="Press Tab to edit" picking-mode="Ignore" />

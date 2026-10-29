@@ -52,16 +52,40 @@
     background-color: rgba(255, 240, 210, 0.15);
 }
 
+/* ---------- clock (bottom-right corner) ---------- */
+
+.clock-panel {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    width: 220px;
+    padding: 8px 12px 6px 12px;
+}
+
+.clock-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.clock-title {
+    font-size: 12px;
+    color: rgb(200, 192, 178);
+}
+
 .time-label {
     color: rgb(250, 226, 170);
-    font-size: 13px;
-    min-width: 40px;
+    font-size: 20px;
+    -unity-font-style: bold;
     -unity-text-align: middle-right;
 }
 
 .time-slider {
-    width: 120px;
-    margin: 0 6px;
+    margin: 4px 0 2px 0;
+}
+
+.clock-panel .grid-toggle {
+    margin-left: 0;
 }
 
 .tool-button {
