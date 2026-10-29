@@ -101,7 +101,14 @@ namespace LivingDiorama.Entities
             // Lost its water (pond deleted or not loaded yet): look again now and then.
             if (Habitat == null || !Habitat.isActiveAndEnabled)
             {
-                if (Habitat != null) SetHabitat(null);
+                // Unity's == treats the destroyed or disabled pond as gone; ReferenceEquals tells us it just happened.
+                if (!ReferenceEquals(Habitat, null))
+                {
+                    // Stop at once (no water holds the fish in any more) and look for new water straight away.
+                    SetHabitat(null);
+                    habitatSearchTimer = 0f;
+                    Refresh();
+                }
                 habitatSearchTimer -= Time.deltaTime;
                 if (habitatSearchTimer <= 0f)
                 {
@@ -198,7 +205,8 @@ namespace LivingDiorama.Entities
 
         private void SetHabitat(WaterArea water)
         {
-            if (Habitat == water) return;
+            // Reference comparison: Unity's == says a destroyed pond equals null, which would skip clearing it.
+            if (ReferenceEquals(Habitat, water)) return;
             if (Habitat != null) Habitat.RemoveResident(this);
             Habitat = water;
             if (Habitat != null) Habitat.AddResident(this);

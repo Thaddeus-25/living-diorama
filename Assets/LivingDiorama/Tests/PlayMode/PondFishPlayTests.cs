@@ -122,7 +122,9 @@ namespace LivingDiorama.Tests
             editor.DeleteSelected();
             yield return null;
             yield return null;
-            Assert.IsTrue(fish.All(f => !f.IsSimulating), "No water, no swimming");
+            Assert.IsTrue(fish.All(f => !f.IsSimulating),
+                "No water, no swimming. " + string.Join("; ", fish.Select(f =>
+                    $"{f.name}: sim={f.IsSimulating} habitat={(f.Habitat == null ? "none" : f.Habitat.name)} held={f.IsHeld} pos={f.transform.position}")));
 
             editor.Undo();
             // Fish look for water again about once a second.
