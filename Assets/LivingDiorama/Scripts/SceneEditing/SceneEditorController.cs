@@ -327,23 +327,40 @@ namespace LivingDiorama.SceneEditing
             if (!isDragging)
             {
                 if (Vector2.Distance(screenPosition, pressScreenPosition) < dragThresholdPixels) return;
-                CommitPendingEdit();
-                isDragging = true;
-                dragBefore = world.Capture(pressedObject);
-                SetObstacleCarving(pressedObject, false);
+                BeginDrag(pressedObject);
             }
 
             if (!TryGetGroundPoint(screenPosition, out var groundPoint)) return;
-            var target = groundPoint + grabOffset;
+            DragTo(groundPoint + grabOffset);
+        }
+
+        private void EndPress() => EndDrag();
+
+        /// <summary>Starts dragging an object (the mouse code calls this once the cursor has moved far enough).</summary>
+        public void BeginDrag(PlacedObject placed)
+        {
+            if (placed == null) return;
+            CommitPendingEdit();
+            pressedObject = placed;
+            isDragging = true;
+            dragBefore = world.Capture(placed);
+            SetObstacleActive(placed, false);
+        }
+
+        /// <summary>Moves the dragged object (grid snap applies).</summary>
+        public void DragTo(Vector3 target)
+        {
+            if (!isDragging || pressedObject == null) return;
             if (GridSnapEnabled) target = GridSnap.Snap(target, gridStep);
             world.Move(pressedObject, target);
         }
 
-        private void EndPress()
+        /// <summary>Drops the dragged object and records the move for undo.</summary>
+        public void EndDrag()
         {
             if (isDragging && pressedObject != null)
             {
-                SetObstacleCarving(pressedObject, true);
+                SetObstacleActive(pressedObject, true);
                 var after = world.Capture(pressedObject);
                 if (!after.ApproximatelyEquals(dragBefore))
                     Commands.Record(new ModifyObjectCommand(world, dragBefore, after, "Move"));
@@ -353,7 +370,7 @@ namespace LivingDiorama.SceneEditing
 
         private void EndPressWithoutCommit()
         {
-            if (pressedObject != null) SetObstacleCarving(pressedObject, true);
+            if (pressedObject != null) SetObstacleActive(pressedObject, true);
             pressedObject = null;
             isDragging = false;
             dragBefore = null;
@@ -369,11 +386,15 @@ namespace LivingDiorama.SceneEditing
             if (placed != null && placed.TryGetComponent(out IHoldable creature)) creature.SetHeld(held);
         }
 
-        /// <summary>A moving obstacle shouldn't carve the NavMesh on every frame of a drag.</summary>
-        private static void SetObstacleCarving(PlacedObject placed, bool enabled)
+        /// <summary>
+        /// Switches a dragged object's NavMesh obstacle off entirely, so it passes through creatures.
+        /// Turning off only carving isn't enough: a non-carving obstacle still takes part in crowd
+        /// avoidance and bulldozes creatures along the drag.
+        /// </summary>
+        private static void SetObstacleActive(PlacedObject placed, bool active)
         {
             if (placed != null && placed.TryGetComponent(out NavMeshObstacle obstacle))
-                obstacle.carving = enabled;
+                obstacle.enabled = active;
         }
 
         private PlacedObject PickObject(Vector2 screenPosition)
