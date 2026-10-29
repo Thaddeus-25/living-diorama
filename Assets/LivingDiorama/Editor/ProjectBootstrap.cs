@@ -82,12 +82,12 @@ namespace LivingDiorama.EditorTools
                 // Stand on either side of the fire, facing it.
                 new InteractionPointSpec
                 {
-                    Name = "WarmLeft", Type = InteractionType.Warm, EntityIds = new[] { "human" }, Animation = "idle",
+                    Name = "WarmLeft", Type = InteractionType.Warm, EntityIds = new[] { "human" }, Animation = "warm",
                     LocalPosition = new Vector3(-1.0f, 0f, -0.1f)
                 },
                 new InteractionPointSpec
                 {
-                    Name = "WarmRight", Type = InteractionType.Warm, EntityIds = new[] { "human" }, Animation = "idle",
+                    Name = "WarmRight", Type = InteractionType.Warm, EntityIds = new[] { "human" }, Animation = "warm",
                     LocalPosition = new Vector3(1.0f, 0f, -0.1f), FaceLeft = true
                 },
                 new InteractionPointSpec

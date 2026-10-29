@@ -32,3 +32,9 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 2bccfd3037dfb17488fcd7be11d02890, type: 3}
     framesPerSecond: 1
     loop: 1
+  - name: warm
+    frames:
+    - {fileID: 21300000, guid: 697c53a50e8c1174f8ac015d449733ae, type: 3}
+    - {fileID: 21300000, guid: a1a25261964efe4498f239347a54ab44, type: 3}
+    framesPerSecond: 1.4
+    loop: 1

@@ -30,6 +30,7 @@ namespace LivingDiorama.EditorTools
             new("idle", 2, 1.5f),
             new("walk", 4, 8f),
             new("sit", 1, 1f),
+            new("warm", 2, 1.4f),
         };
 
         public static readonly ClipSpec[] CatClips =
@@ -182,6 +183,7 @@ namespace LivingDiorama.EditorTools
         {
             var canvas = new PixelCanvas(16, 30);
             if (clip == "sit") PaintHumanSitting(canvas);
+            else if (clip == "warm") PaintHumanWarming(canvas, frame);
             else
             {
                 // (back foot x, front foot x, back hand x, front hand x, upper-body drop)
@@ -216,6 +218,31 @@ namespace LivingDiorama.EditorTools
 
             DrawLimb(canvas, 8, 16 - drop, frontHand, 10 - drop, 2, Shirt);
             canvas.FillRect(frontHand, 10 - drop, 2, 1, Skin);
+        }
+
+        /// <summary>
+        /// Standing side-on with both hands held out towards something warm in front (to the right).
+        /// The second frame leans in a pixel and lowers the hands, a gentle sway.
+        /// </summary>
+        private static void PaintHumanWarming(PixelCanvas canvas, int frame)
+        {
+            int sway = frame == 1 ? 1 : 0;
+
+            // Back arm first (behind the torso), reaching out just below the front one.
+            DrawLimb(canvas, 7, 15, 11 + sway, 12 - sway, 2, ShirtShade);
+            canvas.FillRect(12 + sway, 12 - sway, 2, 1, SkinShade);
+
+            // Legs slightly apart, planted.
+            DrawLimb(canvas, 6, 8, 5, 1, 2, PantsShade);
+            DrawLimb(canvas, 8, 8, 9, 1, 2, Pants);
+            canvas.FillRect(5, 1, 3, 1, Shoe);
+            canvas.FillRect(9, 1, 3, 1, Shoe);
+
+            PaintUpperBody(canvas, torsoBottom: 9 - sway);
+
+            // Front arm held out straight, palm towards the fire.
+            DrawLimb(canvas, 8, 15 - sway, 12 + sway, 13 - sway, 2, Shirt);
+            canvas.FillRect(13 + sway, 13 - sway, 2, 2, Skin);
         }
 
         /// <summary>

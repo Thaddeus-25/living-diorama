@@ -235,7 +235,7 @@ namespace LivingDiorama.Tests
             Assert.IsNotNull(warming, $"Human never reached the fire (state: {human.CurrentState?.Name})");
             var fire = warming.Point.GetComponentInParent<PlacedObject>();
             Assert.AreEqual("campfire", fire.Definition.Id);
-            Assert.AreEqual(SpriteAnimationSet.Idle, human.Animator.CurrentClipName);
+            Assert.AreEqual("warm", human.Animator.CurrentClipName, "Hands held out to the fire");
             bool fireIsToTheLeft = fire.transform.position.x < human.transform.position.x;
             Assert.AreEqual(fireIsToTheLeft, human.Placed.FlipX, "Faces the fire");
         }
