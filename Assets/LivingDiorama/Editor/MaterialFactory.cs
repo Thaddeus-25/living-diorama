@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEditor.Rendering.Universal.ShaderGUI;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -9,6 +10,8 @@ namespace LivingDiorama.EditorTools
     {
         private const string LitShader = "Universal Render Pipeline/Lit";
         private const string UnlitShader = "Universal Render Pipeline/Unlit";
+        private const string ParticlesSimpleLitShader = "Universal Render Pipeline/Particles/Simple Lit";
+        private const string ParticlesUnlitShader = "Universal Render Pipeline/Particles/Unlit";
 
         /// <summary>Lit, alpha-clipped, double-sided material for billboard sprites. Writes depth, so no sort orders are needed.</summary>
         public static Material CreateSpriteLit(string path)
@@ -49,7 +52,7 @@ namespace LivingDiorama.EditorTools
         public static Material CreateParticleLit(string path, Texture texture)
         {
             // Simple Lit, so particles (e.g. leaves) darken at night with the rest of the scene.
-            var material = new Material(FindShader("Universal Render Pipeline/Particles/Simple Lit")) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
+            var material = new Material(FindShader(ParticlesSimpleLitShader)) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
             material.SetTexture("_BaseMap", texture);
             material.SetFloat("_Surface", 1f);
             material.SetFloat("_Blend", 0f);
@@ -65,7 +68,7 @@ namespace LivingDiorama.EditorTools
         /// <summary>Additive, unlit particles that glow (embers, sparks).</summary>
         public static Material CreateParticleGlow(string path, Texture texture)
         {
-            var material = new Material(FindShader("Universal Render Pipeline/Particles/Unlit")) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
+            var material = new Material(FindShader(ParticlesUnlitShader)) { name = System.IO.Path.GetFileNameWithoutExtension(path) };
             material.SetTexture("_BaseMap", texture);
             material.SetFloat("_Surface", 1f);
             material.SetFloat("_Blend", 2f); // additive
@@ -129,6 +132,7 @@ namespace LivingDiorama.EditorTools
             var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (existing == null)
             {
+                ApplyUrpMaterialSetup(material);
                 AssetDatabase.CreateAsset(material, path);
                 return material;
             }
@@ -138,9 +142,37 @@ namespace LivingDiorama.EditorTools
             existing.shaderKeywords = material.shaderKeywords;
             existing.renderQueue = material.renderQueue;
             existing.SetOverrideTag("RenderType", material.GetTag("RenderType", false));
+            // Recomputes what CopyPropertiesFromMaterial doesn't carry over (double-sided GI, shader passes).
+            ApplyUrpMaterialSetup(existing);
             EditorUtility.SetDirty(existing);
             Object.DestroyImmediate(material);
             return existing;
+        }
+
+        /// <summary>
+        /// Runs URP's own material setup, the same calls its material postprocessor makes when the
+        /// Editor validates a material (keywords, alpha-to-coverage, double-sided GI, motion-vector
+        /// pass, legacy _Color). Generated files then match what Unity saves, so opening the project
+        /// no longer shows them as changed.
+        /// </summary>
+        private static void ApplyUrpMaterialSetup(Material material)
+        {
+            switch (material.shader.name)
+            {
+                case LitShader:
+                    BaseShaderGUI.SetMaterialKeywords(material, LitGUI.SetMaterialKeywords);
+                    break;
+                case UnlitShader:
+                    BaseShaderGUI.SetMaterialKeywords(material);
+                    break;
+                case ParticlesSimpleLitShader:
+                    BaseShaderGUI.SetMaterialKeywords(material, SimpleLitGUI.SetMaterialKeywords, ParticleGUI.SetMaterialKeywords);
+                    break;
+                case ParticlesUnlitShader:
+                    BaseShaderGUI.SetMaterialKeywords(material, null, ParticleGUI.SetMaterialKeywords);
+                    break;
+                // Custom shaders (e.g. the tilt-shift pass) have no URP setup.
+            }
         }
     }
 }
